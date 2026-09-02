@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0">
+
+  <title>Painel Administrativo | Navoryx</title>
+
+  <link
+    rel="icon"
+    type="image/png"
+    href="img/favicon.png">
+
+  <link
+    rel="stylesheet"
+    href="style.css">
+
+</head>
+
+<body class="admin-body">
+
+
+  <div class="topbar">
+
+    Painel Administrativo • Navoryx
+
+  </div>
+
+
+  <header class="header">
+
+    <div class="container header-inner">
+
+      <a
+        href="index.html"
+        class="brand">
+
+        <img
+          src="img/logo.png"
+          alt="Navoryx"
+          class="logo-navoryx">
+
+      </a>
+
+
+      <a
+        href="index.html"
+        class="cart-button">
+
+        ← Ver loja
+
+      </a>
+
+    </div>
+
+  </header>
+
+
+  <main>
+
+    <section class="admin-section">
+
+      <div class="container">
+
+
+        <div class="admin-header">
+
+          <div>
+
+            <span class="eyebrow">
+              ADMINISTRAÇÃO
+            </span>
+
+            <h1>
+              Painel Navoryx
+            </h1>
+
+            <p>
+              Gerencie os produtos da sua loja.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div class="admin-dashboard">
+
+
+          <!-- RESUMO -->
+
+          <div class="admin-stat">
+
+            <span>
+              Produtos cadastrados
+            </span>
+
+            <strong id="adminProductCount">
+              0
+            </strong>
+
+          </div>
+
+
+          <!-- CADASTRO -->
+
+          <div class="admin-card">
+
+            <h2>
+              Cadastrar produto
+            </h2>
+
+
+            <form id="adminProductForm">
+
+
+              <div class="admin-form-grid">
+
+
+                <div class="admin-field">
+
+                  <label for="adminName">
+                    Nome do produto
+                  </label>
+
+                  <input
+                    type="text"
+                    id="adminName"
+                    required>
+
+                </div>
+
+
+                <div class="admin-field">
+
+                  <label for="adminPrice">
+                    Preço
+                  </label>
+
+                  <input
+                    type="number"
+                    id="adminPrice"
+                    step="0.01"
+                    min="0"
+                    required>
+
+                </div>
+
+
+                <div class="admin-field">
+
+                  <label for="adminImage">
+                    Imagem
+                  </label>
+
+                  <input
+                    type="text"
+                    id="adminImage"
+                    placeholder="img/produto.jpg"
+                    required>
+
+                </div>
+
+
+                <div class="admin-field">
+
+                  <label for="adminCategory">
+                    Categoria
+                  </label>
+
+                  <select
+                    id="adminCategory"
+                    required>
+
+                    <option value="">
+                      Selecione
+                    </option>
+
+                    <option value="audio">
+                      Áudio
+                    </option>
+
+                    <option value="smartwatch">
+                      Smartwatch
+                    </option>
+
+                    <option value="cabos">
+                      Cabos e Carregadores
+                    </option>
+
+                    <option value="celular">
+                      Celulares e Acessórios
+                    </option>
+
+                  </select>
+
+                </div>
+
+
+                <div class="admin-field admin-field-full">
+
+                  <label for="adminDescription">
+                    Descrição
+                  </label>
+
+                  <textarea
+                    id="adminDescription"
+                    rows="4"
+                    required></textarea>
+
+                </div>
+
+
+              </div>
+
+
+              <button
+                type="submit"
+                class="product-buy-button">
+
+                + Cadastrar produto
+
+              </button>
+
+
+            </form>
+
+          </div>
+
+
+          <!-- PRODUTOS -->
+
+          <div class="admin-card">
+
+            <div class="admin-list-header">
+
+              <div>
+
+                <h2>
+                  Produtos
+                </h2>
+
+                <p>
+                  Produtos cadastrados na Navoryx.
+                </p>
+
+              </div>
+
+            </div>
+
+
+            <div
+              id="adminProducts"
+              class="admin-products">
+
+              <p>
+                Nenhum produto cadastrado.
+              </p>
+
+            </div>
+
+          </div>
+
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <footer>
+
+    <div class="container footer-inner">
+
+      <div>
+
+        <strong class="footer-logo">
+          NAVORYX
+        </strong>
+
+        <p>
+          Painel Administrativo
+        </p>
+
+      </div>
+
+      <div>
+
+        <p>
+          © 2026 Navoryx.
+        </p>
+
+      </div>
+
+    </div>
+
+  </footer>
+
+
+  <script src="admin.js"></script>
+
+</body>
+
+</html>

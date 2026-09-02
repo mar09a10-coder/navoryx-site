@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Pagamento | Navoryx</title>
+
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <div class="topbar">
+    Compra segura • Ofertas selecionadas • Atendimento
+  </div>
+
+  <header class="header">
+
+    <div class="container header-inner">
+
+      <a href="index.html" class="brand">
+        <img
+          src="img/logo.png"
+          alt="Navoryx"
+          class="logo-navoryx">
+      </a>
+
+      <form class="search" action="index.html" method="get">
+
+        <input
+          type="search"
+          name="busca"
+          placeholder="O que você procura?"
+          autocomplete="off">
+
+        <button type="submit">
+          Buscar
+        </button>
+
+      </form>
+
+      <a href="carrinho.html" class="cart-button">
+        🛒
+        <span id="cartCount">0</span>
+      </a>
+
+    </div>
+
+    <nav class="nav">
+      <a href="index.html">Início</a>
+      <a href="index.html#categorias">Categorias</a>
+      <a href="index.html#destaques">Destaques</a>
+      <a href="carrinho.html">Carrinho</a>
+    </nav>
+
+  </header>
+
+
+  <main>
+
+    <section class="payment-page">
+
+      <div class="container">
+
+        <h1>Pagamento</h1>
+
+        <div class="payment-layout">
+
+          <div class="payment-card">
+
+            <h2>Pagamento seguro</h2>
+
+            <div class="payment-method-area">
+
+              <h3>Mercado Pago</h3>
+
+              <p>
+                Na próxima tela você poderá escolher Pix,
+                cartão de crédito e outros meios disponíveis
+                no Checkout Pro do Mercado Pago.
+              </p>
+
+            </div>
+
+            <button
+              type="button"
+              class="checkout-confirm-button"
+              id="payButton">
+
+              Ir para pagamento seguro
+
+            </button>
+
+            <p class="payment-security-note">
+              🔒 O pagamento será concluído no ambiente seguro do Mercado Pago.
+            </p>
+
+          </div>
+
+
+          <aside class="checkout-summary">
+
+            <h2>
+              Resumo do pedido
+            </h2>
+
+            <div
+              id="paymentItems"
+              class="checkout-items">
+            </div>
+
+            <div class="summary-line">
+
+              <span>Produtos</span>
+
+              <span id="paymentProductsTotal">
+                R$ 0,00
+              </span>
+
+            </div>
+
+            <div class="summary-line">
+
+              <span>Frete</span>
+
+              <span>
+                A calcular
+              </span>
+
+            </div>
+
+            <div class="summary-total">
+
+              <span>Total</span>
+
+              <strong id="paymentTotal">
+                R$ 0,00
+              </strong>
+
+            </div>
+
+          </aside>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <footer>
+
+    <div class="container footer-inner">
+
+      <div>
+
+        <strong class="footer-logo">
+          NAVORYX
+        </strong>
+
+        <p>
+          Tecnologia • Acessórios • Utilidades
+        </p>
+
+      </div>
+
+      <div>
+        <p>© 2026 Navoryx.</p>
+      </div>
+
+    </div>
+
+  </footer>
+
+
+  <script src="script.js"></script>
+
+</body>
+
+</html>

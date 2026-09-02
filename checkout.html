@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Checkout | Navoryx</title>
+
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <div class="topbar">
+    Compra segura • Ofertas selecionadas • Atendimento
+  </div>
+
+  <header class="header">
+
+    <div class="container header-inner">
+
+      <a href="index.html" class="brand">
+        <img
+          src="img/logo.png"
+          alt="Navoryx"
+          class="logo-navoryx">
+      </a>
+
+      <form class="search" action="index.html" method="get">
+
+        <input
+          type="search"
+          name="busca"
+          placeholder="O que você procura?"
+          autocomplete="off">
+
+        <button type="submit">
+          Buscar
+        </button>
+
+      </form>
+
+      <a href="carrinho.html" class="cart-button">
+        🛒
+        <span id="cartCount">0</span>
+      </a>
+
+    </div>
+
+    <nav class="nav">
+      <a href="index.html">Início</a>
+      <a href="index.html#categorias">Categorias</a>
+      <a href="index.html#destaques">Destaques</a>
+      <a href="carrinho.html">Carrinho</a>
+    </nav>
+
+  </header>
+
+
+  <main>
+
+    <section class="checkout-page">
+
+      <div class="container">
+
+        <h1>Finalizar compra</h1>
+
+        <div class="checkout-layout">
+
+          <div class="checkout-form-card">
+
+            <h2>Dados do cliente</h2>
+
+            <form id="checkoutForm">
+
+              <div class="checkout-field">
+
+                <label for="nome">
+                  Nome completo
+                </label>
+
+                <input
+                  type="text"
+                  id="nome"
+                  name="nome"
+                  autocomplete="name"
+                  required>
+
+              </div>
+
+
+              <div class="checkout-field">
+
+                <label for="email">
+                  E-mail
+                </label>
+
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  autocomplete="email"
+                  required>
+
+              </div>
+
+
+              <div class="checkout-field">
+
+                <label for="telefone">
+                  Telefone
+                </label>
+
+                <input
+                  type="tel"
+                  id="telefone"
+                  name="telefone"
+                  autocomplete="tel"
+                  required>
+
+              </div>
+
+
+              <h2 class="checkout-section-title">
+                Endereço de entrega
+              </h2>
+
+
+              <div class="checkout-row">
+
+                <div class="checkout-field">
+
+                  <label for="cep">
+                    CEP
+                  </label>
+
+                  <input
+                    type="text"
+                    id="cep"
+                    name="cep"
+                    inputmode="numeric"
+                    autocomplete="postal-code"
+                    required>
+
+                </div>
+
+
+                <div class="checkout-field">
+
+                  <label for="numero">
+                    Número
+                  </label>
+
+                  <input
+                    type="text"
+                    id="numero"
+                    name="numero"
+                    required>
+
+                </div>
+
+              </div>
+
+
+              <div class="checkout-field">
+
+                <label for="endereco">
+                  Endereço
+                </label>
+
+                <input
+                  type="text"
+                  id="endereco"
+                  name="endereco"
+                  autocomplete="street-address"
+                  required>
+
+              </div>
+
+
+              <div class="checkout-field">
+
+                <label for="complemento">
+                  Complemento
+                </label>
+
+                <input
+                  type="text"
+                  id="complemento"
+                  name="complemento">
+
+              </div>
+
+
+              <div class="checkout-row">
+
+                <div class="checkout-field">
+
+                  <label for="bairro">
+                    Bairro
+                  </label>
+
+                  <input
+                    type="text"
+                    id="bairro"
+                    name="bairro"
+                    required>
+
+                </div>
+
+
+                <div class="checkout-field">
+
+                  <label for="cidade">
+                    Cidade
+                  </label>
+
+                  <input
+                    type="text"
+                    id="cidade"
+                    name="cidade"
+                    required>
+
+                </div>
+
+              </div>
+
+
+              <div class="checkout-field">
+
+                <label for="estado">
+                  Estado
+                </label>
+
+                <input
+                  type="text"
+                  id="estado"
+                  name="estado"
+                  maxlength="2"
+                  placeholder="ES"
+                  autocomplete="address-level1"
+                  required>
+
+              </div>
+
+
+              <button
+                type="submit"
+                class="checkout-confirm-button">
+
+                Continuar para pagamento
+
+              </button>
+
+            </form>
+
+          </div>
+
+
+          <aside class="checkout-summary">
+
+            <h2>
+              Resumo do pedido
+            </h2>
+
+            <div
+              id="checkoutItems"
+              class="checkout-items">
+            </div>
+
+
+            <div class="summary-line">
+
+              <span>Produtos</span>
+
+              <span id="checkoutProductsTotal">
+                R$ 0,00
+              </span>
+
+            </div>
+
+
+            <div class="summary-line">
+
+              <span>Frete</span>
+
+              <span>
+                A calcular
+              </span>
+
+            </div>
+
+
+            <div class="summary-total">
+
+              <span>Total</span>
+
+              <strong id="checkoutTotal">
+                R$ 0,00
+              </strong>
+
+            </div>
+
+          </aside>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <footer>
+
+    <div class="container footer-inner">
+
+      <div>
+
+        <strong class="footer-logo">
+          NAVORYX
+        </strong>
+
+        <p>
+          Tecnologia • Acessórios • Utilidades
+        </p>
+
+      </div>
+
+      <div>
+
+        <p>
+          © 2026 Navoryx.
+        </p>
+
+      </div>
+
+    </div>
+
+  </footer>
+
+
+  <script src="script.js"></script>
+
+</body>
+
+</html>

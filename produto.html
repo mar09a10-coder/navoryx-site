@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Produto | Navoryx</title>
+
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <div class="topbar">
+    Compra segura • Ofertas selecionadas • Atendimento
+  </div>
+
+  <header class="header">
+
+    <div class="container header-inner">
+
+      <a href="index.html" class="brand">
+        <img
+          src="img/logo.png"
+          alt="Navoryx"
+          class="logo-navoryx">
+      </a>
+
+      <form class="search" action="index.html" method="get">
+
+        <input
+          type="search"
+          name="busca"
+          placeholder="O que você procura?"
+          autocomplete="off">
+
+        <button type="submit">
+          Buscar
+        </button>
+
+      </form>
+
+      <a href="carrinho.html" class="cart-button">
+        🛒
+        <span id="cartCount">0</span>
+      </a>
+
+    </div>
+
+    <nav class="nav">
+      <a href="index.html">Início</a>
+      <a href="index.html#categorias">Categorias</a>
+      <a href="index.html#destaques">Destaques</a>
+      <a href="index.html#beneficios">Vantagens</a>
+      <a href="index.html#contato">Contato</a>
+    </nav>
+
+  </header>
+
+
+  <main>
+
+    <section class="product-page">
+
+      <div class="container">
+
+        <a href="index.html#destaques" class="back-link">
+          ← Voltar para produtos
+        </a>
+
+        <div class="product-page-grid">
+
+          <div class="product-page-image">
+
+            <img
+              id="dynamicProductImage"
+              src=""
+              alt="Produto">
+
+          </div>
+
+
+          <div class="product-page-info">
+
+            <span class="product-page-tag">
+              Destaque
+            </span>
+
+            <h1 id="dynamicProductName">
+              Produto
+            </h1>
+
+            <p
+              class="product-page-description"
+              id="dynamicProductDescription">
+            </p>
+
+            <div
+              class="product-page-price"
+              id="dynamicProductPrice">
+            </div>
+
+            <p class="product-page-installment">
+              Consulte as opções de pagamento no checkout.
+            </p>
+
+
+            <div class="quantity-box">
+
+              <button type="button" id="decrease">
+                −
+              </button>
+
+              <span id="quantity">
+                1
+              </span>
+
+              <button type="button" id="increase">
+                +
+              </button>
+
+            </div>
+
+
+            <button
+              class="product-buy-button"
+              id="buyButton">
+
+              🛒 Adicionar ao carrinho
+
+            </button>
+
+
+            <div class="product-security">
+
+              <div>
+                🔒 Compra segura
+              </div>
+
+              <div>
+                📦 Envio nacional
+              </div>
+
+              <div>
+                💬 Atendimento
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="product-full-description">
+
+          <h2>
+            Sobre o produto
+          </h2>
+
+          <p id="dynamicProductFullDescription">
+          </p>
+
+          <h2>
+            Conteúdo
+          </h2>
+
+          <p id="dynamicProductContent">
+            1 unidade.
+          </p>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <footer>
+
+    <div class="container footer-inner">
+
+      <div>
+
+        <strong class="footer-logo">
+          NAVORYX
+        </strong>
+
+        <p>
+          Tecnologia • Acessórios • Utilidades
+        </p>
+
+      </div>
+
+      <div>
+
+        <p>
+          © 2026 Navoryx.
+        </p>
+
+      </div>
+
+    </div>
+
+  </footer>
+
+
+  <script src="script.js"></script>
+
+</body>
+
+</html>
