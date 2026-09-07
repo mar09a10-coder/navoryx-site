@@ -2041,7 +2041,7 @@ if (payButton) {
 
         const resposta =
           await fetch(
-            'http://https://navoryx-backend.onrender.com/criar-preferencia',
+            'https://navoryx-backend-2.onrender.com/criar-preferencia',
             {
               method: 'POST',
 
