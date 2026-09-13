@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Resultado do Pagamento | Navoryx</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .payment-return {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .payment-return-card {
+      width: 100%;
+      max-width: 560px;
+      text-align: center;
+      padding: 40px 28px;
+      border: 1px solid #243242;
+      border-radius: 18px;
+      background: #0c1118;
+    }
+
+    .payment-return-icon {
+      font-size: 56px;
+      margin-bottom: 20px;
+    }
+
+    .payment-return-card h1 {
+      margin-bottom: 14px;
+    }
+
+    .payment-return-card p {
+      margin-bottom: 28px;
+      color: #aebccc;
+      line-height: 1.6;
+    }
+
+    .payment-return-button {
+      display: inline-block;
+      padding: 14px 24px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      background: #1687d9;
+      color: #ffffff;
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="payment-return">
+
+    <section class="payment-return-card">
+
+      <div id="statusIcon" class="payment-return-icon">
+        ⏳
+      </div>
+
+      <h1 id="statusTitle">
+        Verificando pagamento...
+      </h1>
+
+      <p id="statusMessage">
+        Aguarde enquanto verificamos o resultado do seu pagamento.
+      </p>
+
+      <a href="index.html" class="payment-return-button">
+        Voltar para a loja
+      </a>
+
+    </section>
+
+  </main>
+
+  <script>
+    const parametros =
+      new URLSearchParams(window.location.search);
+
+    const status =
+      parametros.get('status');
+
+    const statusIcon =
+      document.getElementById('statusIcon');
+
+    const statusTitle =
+      document.getElementById('statusTitle');
+
+    const statusMessage =
+      document.getElementById('statusMessage');
+
+    if (status === 'approved') {
+
+      statusIcon.textContent = '✅';
+
+      statusTitle.textContent =
+        'Pagamento aprovado!';
+
+      statusMessage.textContent =
+        'Seu pagamento foi aprovado com sucesso. Obrigado por comprar na Navoryx.';
+
+      localStorage.removeItem('navoryxCart');
+
+    } else if (status === 'pending') {
+
+      statusIcon.textContent = '⏳';
+
+      statusTitle.textContent =
+        'Pagamento pendente';
+
+      statusMessage.textContent =
+        'Seu pagamento ainda está sendo processado. Assim que houver uma atualização, o Mercado Pago informará o resultado.';
+
+    } else {
+
+      statusIcon.textContent = '❌';
+
+      statusTitle.textContent =
+        'Pagamento não aprovado';
+
+      statusMessage.textContent =
+        'O pagamento não foi concluído. Você pode voltar para a loja e tentar novamente.';
+    }
+  </script>
+
+</body>
+
+</html>
