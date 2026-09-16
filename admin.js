@@ -1,521 +1,177 @@
-const API_URL = 'http://localhost:3000/produtos';
-// ==========================================
-// NAVORYX - PAINEL ADMINISTRATIVO
-// ==========================================
+const API_BASE = 'https://navoryx-backend-2.onrender.com';
+const TOKEN_KEY = 'navoryxAdminToken';
 
+const loginView = document.getElementById('loginView');
+const adminApp = document.getElementById('adminApp');
+const loginForm = document.getElementById('loginForm');
+const loginMessage = document.getElementById('loginMessage');
 const form = document.getElementById('adminProductForm');
+const formMessage = document.getElementById('formMessage');
 const productsContainer = document.getElementById('adminProducts');
 const productCount = document.getElementById('adminProductCount');
+const cancelEdit = document.getElementById('cancelEdit');
+const saveButton = document.getElementById('saveButton');
+const formTitle = document.getElementById('formTitle');
 
-const nameInput = document.getElementById('adminName');
-const priceInput = document.getElementById('adminPrice');
-const imageInput = document.getElementById('adminImage');
-const categoryInput = document.getElementById('adminCategory');
-const descriptionInput = document.getElementById('adminDescription');
-
-let produtoEditando = null;
-
-
-// ==========================================
-// PRODUTOS INICIAIS
-// ==========================================
-
-const produtosIniciais = [
-
-  {
-    id: 1,
-    name: 'Headset Bluetooth',
-    price: 99.90,
-    image: 'img/produto-headset.jpg',
-    category: 'audio',
-    description: 'Conforto para música e chamadas.',
-    page: 'produto-headset.html',
-    active: true
-  },
-
-  {
-    id: 2,
-    name: 'Smartwatch',
-    price: 129.90,
-    image: 'img/produto-smartwatch.jpg',
-    category: 'smartwatch',
-    description: 'Visual moderno para o dia a dia.',
-    page: 'produto-smartwatch.html',
-    active: true
-  },
-
-  {
-    id: 3,
-    name: 'Carregador Rápido',
-    price: 49.90,
-    image: 'img/produto-carregador.jpg',
-    category: 'cabos',
-    description: 'Compacto e prático.',
-    page: 'produto-carregador.html',
-    active: true
-  },
-
-  {
-    id: 4,
-    name: 'Fone de Ouvido LEHMOX LEF-1216',
-    price: 39.90,
-    image: 'img/produto-fone-lehmox.png',
-    category: 'audio',
-    description: 'Fone com fio, microfone e controle integrado.',
-    page: 'produto-lehmox.html',
-    active: true
-  }
-
-];
-
-
-// ==========================================
-// CARREGAR PRODUTOS
-// ==========================================
+const fields = {
+  name: document.getElementById('adminName'),
+  sku: document.getElementById('adminSku'),
+  price: document.getElementById('adminPrice'),
+  salePrice: document.getElementById('adminSalePrice'),
+  stock: document.getElementById('adminStock'),
+  image: document.getElementById('adminImage'),
+  category: document.getElementById('adminCategory'),
+  description: document.getElementById('adminDescription'),
+  active: document.getElementById('adminActive')
+};
 
 let produtos = [];
+let produtoEditando = null;
 
-async function carregarProdutos() {
-
-  try {
-
-    const resposta = await fetch(API_URL);
-
-    produtos = await resposta.json();
-
-    renderizarProdutos();
-
-  } catch (erro) {
-
-    console.error(
-      'Erro ao carregar produtos:',
-      erro
-    );
-
-    alert(
-      'Não foi possível carregar os produtos do servidor.'
-    );
-
-  }
-
+function token() { return sessionStorage.getItem(TOKEN_KEY); }
+function authHeaders() {
+  return { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token() };
 }
-
-// ==========================================
-// SALVAR
-// ==========================================
-
-function salvarProdutos() {
-
-  localStorage.setItem(
-    'navoryxProducts',
-    JSON.stringify(produtos)
-  );
-
-  renderizarProdutos();
-
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 }
-
-
-// ==========================================
-// FORMATAR PREÇO
-// ==========================================
-
 function formatarPreco(valor) {
+  return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+function mostrarApp() { loginView.hidden = true; adminApp.hidden = false; carregarProdutos(); }
+function mostrarLogin() { adminApp.hidden = true; loginView.hidden = false; }
+function logout() { sessionStorage.removeItem(TOKEN_KEY); produtoEditando = null; mostrarLogin(); }
 
-  return Number(valor).toLocaleString(
-    'pt-BR',
-    {
-      style: 'currency',
-      currency: 'BRL'
-    }
-  );
-
+async function api(path, options = {}) {
+  const resposta = await fetch(API_BASE + path, options);
+  const dados = await resposta.json().catch(() => ({}));
+  if (resposta.status === 401) { logout(); throw new Error('Sessão expirada. Entre novamente.'); }
+  if (!resposta.ok) throw new Error(dados.erro || 'Não foi possível concluir a operação.');
+  return dados;
 }
 
-
-// ==========================================
-// MOSTRAR PRODUTOS
-// ==========================================
-
-function renderizarProdutos() {
-
-  productsContainer.innerHTML = '';
-
-  productCount.textContent = produtos.length;
-
-
-  if (produtos.length === 0) {
-
-    productsContainer.innerHTML = `
-      <p>
-        Nenhum produto cadastrado.
-      </p>
-    `;
-
-    return;
-
-  }
-
-
-  produtos.forEach(produto => {
-
-    const item = document.createElement('div');
-
-    item.className = 'admin-product-item';
-
-
-    item.innerHTML = `
-
-      <div class="admin-product-image">
-
-        <img
-          src="${produto.image}"
-          alt="${produto.name}">
-
-      </div>
-
-
-      <div class="admin-product-info">
-
-        <strong>
-          ${produto.name}
-        </strong>
-
-        <span>
-          ${formatarPreco(produto.price)}
-        </span>
-
-        <small>
-          ${produto.active ? '🟢 Visível na loja' : '🔴 Oculto'}
-        </small>
-
-      </div>
-
-
-      <div class="admin-product-actions">
-
-        <button
-          type="button"
-          data-action="edit"
-          data-id="${produto.id}">
-          Editar
-        </button>
-
-        <button
-          type="button"
-          data-action="visibility"
-          data-id="${produto.id}">
-          ${produto.active ? 'Ocultar' : 'Mostrar'}
-        </button>
-
-        <button
-          type="button"
-          data-action="delete"
-          data-id="${produto.id}">
-          Excluir
-        </button>
-
-      </div>
-
-    `;
-
-
-    productsContainer.appendChild(item);
-
-  });
-
-}
-
-
-// ==========================================
-// CADASTRAR / SALVAR ALTERAÇÃO
-// ==========================================
-
-form.addEventListener('submit', async event => {
-
+loginForm.addEventListener('submit', async event => {
   event.preventDefault();
-
-  const nome = nameInput.value.trim();
-  const preco = Number(priceInput.value);
-  const imagem = imageInput.value.trim();
-  const categoria = categoryInput.value;
-  const descricao = descriptionInput.value.trim();
-
-  if (
-    !nome ||
-    preco <= 0 ||
-    !imagem ||
-    !categoria ||
-    !descricao
-  ) {
-
-    alert(
-      'Preencha todos os campos corretamente.'
-    );
-
-    return;
-  }
-
-
-  const dadosProduto = {
-
-    name: nome,
-    price: preco,
-    image: imagem,
-    category: categoria,
-    description: descricao
-
-  };
-
-
+  loginMessage.textContent = 'Entrando...';
+  loginMessage.className = 'admin-message';
   try {
-
-    // EDITAR PRODUTO
-    if (produtoEditando !== null) {
-
-      const resposta = await fetch(
-        `${API_URL}/${produtoEditando}`,
-        {
-          method: 'PUT',
-
-          headers: {
-            'Content-Type': 'application/json'
-          },
-
-          body: JSON.stringify(dadosProduto)
-        }
-      );
-
-
-      if (!resposta.ok) {
-        throw new Error(
-          'Erro ao editar produto.'
-        );
-      }
-
-
-      produtoEditando = null;
-
-      form.querySelector(
-        'button[type="submit"]'
-      ).textContent =
-        '+ Cadastrar produto';
-
-
-    } else {
-
-      // CADASTRAR NOVO PRODUTO
-
-      const resposta = await fetch(
-        API_URL,
-        {
-          method: 'POST',
-
-          headers: {
-            'Content-Type': 'application/json'
-          },
-
-          body: JSON.stringify(dadosProduto)
-        }
-      );
-
-
-      if (!resposta.ok) {
-        throw new Error(
-          'Erro ao cadastrar produto.'
-        );
-      }
-
-    }
-
-
-    form.reset();
-
-    await carregarProdutos();
-
-
+    const dados = await api('/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: document.getElementById('adminPassword').value })
+    });
+    sessionStorage.setItem(TOKEN_KEY, dados.token);
+    loginForm.reset();
+    mostrarApp();
   } catch (erro) {
-
-    console.error(erro);
-
-    alert(
-      'Não foi possível salvar o produto.'
-    );
-
+    loginMessage.textContent = erro.message;
+    loginMessage.className = 'admin-message error';
   }
-
 });
 
-
-// ==========================================
-// BOTÕES DOS PRODUTOS
-// ==========================================
-
-productsContainer.addEventListener(
-  'click',
-  event => {
-
-    const botao =
-      event.target.closest('button');
-
-    if (!botao) {
-      return;
-    }
-
-
-    const id =
-      Number(botao.dataset.id);
-
-    const acao =
-      botao.dataset.action;
-
-    const produto =
-      produtos.find(
-        produto => produto.id === id
-      );
-
-
-    if (!produto) {
-      return;
-    }
-
-
-    // EDITAR
-    if (acao === 'edit') {
-
-      nameInput.value =
-        produto.name;
-
-      priceInput.value =
-        produto.price;
-
-      imageInput.value =
-        produto.image;
-
-      categoryInput.value =
-        produto.category;
-
-      descriptionInput.value =
-        produto.description;
-
-
-      produtoEditando =
-        produto.id;
-
-
-      form.querySelector(
-        'button[type="submit"]'
-      ).textContent =
-        'Salvar alterações';
-
-
-      window.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-
-    }
-
-
-    // OCULTAR / MOSTRAR
-if (acao === 'visibility') {
-
-  const novoStatus = !produto.active;
-
-  fetch(
-    `${API_URL}/${produto.id}`,
-    {
-      method: 'PUT',
-
-      headers: {
-        'Content-Type': 'application/json'
-      },
-
-      body: JSON.stringify({
-        active: novoStatus
-      })
-    }
-  )
-    .then(resposta => {
-
-      if (!resposta.ok) {
-        throw new Error(
-          'Erro ao alterar visibilidade.'
-        );
-      }
-
-      return resposta.json();
-
-    })
-    .then(() => {
-
-      carregarProdutos();
-
-    })
-    .catch(erro => {
-
-      console.error(erro);
-
-      alert(
-        'Não foi possível alterar a visibilidade.'
-      );
-
-    });
-
+async function verificarSessao() {
+  if (!token()) return mostrarLogin();
+  try {
+    await api('/admin/me', { headers: authHeaders() });
+    mostrarApp();
+  } catch (_) { mostrarLogin(); }
 }
 
+async function carregarProdutos() {
+  productsContainer.innerHTML = '<p>Carregando...</p>';
+  try {
+    produtos = await api('/produtos');
+    renderizarProdutos();
+  } catch (erro) {
+    productsContainer.innerHTML = '<p>' + escapeHtml(erro.message) + '</p>';
+  }
+}
 
-// EXCLUIR
-if (acao === 'delete') {
+function renderizarProdutos() {
+  productCount.textContent = produtos.length;
+  if (!produtos.length) return productsContainer.innerHTML = '<p>Nenhum produto cadastrado.</p>';
+  productsContainer.innerHTML = produtos.map(produto => `
+    <div class="admin-product-item">
+      <div class="admin-product-image"><img src="${escapeHtml(produto.image)}" alt="${escapeHtml(produto.name)}"></div>
+      <div class="admin-product-info">
+        <strong>${escapeHtml(produto.name)}</strong>
+        <span>${formatarPreco(produto.salePrice || produto.price)}</span>
+        <small>SKU: ${escapeHtml(produto.sku || '—')} • Estoque: ${Number(produto.stock || 0)}</small>
+        <small>${produto.active !== false ? '🟢 Visível na loja' : '🔴 Oculto'}</small>
+      </div>
+      <div class="admin-product-actions">
+        <button type="button" data-action="edit" data-id="${produto.id}">Editar</button>
+        <button type="button" data-action="visibility" data-id="${produto.id}">${produto.active !== false ? 'Ocultar' : 'Mostrar'}</button>
+        <button type="button" data-action="delete" data-id="${produto.id}">Excluir</button>
+      </div>
+    </div>`).join('');
+}
 
-  const confirmar = confirm(
-    `Excluir "${produto.name}"?`
-  );
+function resetarFormulario() {
+  form.reset();
+  fields.stock.value = 0;
+  fields.active.checked = true;
+  produtoEditando = null;
+  formTitle.textContent = 'Cadastrar produto';
+  saveButton.textContent = '+ Cadastrar produto';
+  cancelEdit.hidden = true;
+  formMessage.textContent = '';
+}
 
-  if (!confirmar) {
+form.addEventListener('submit', async event => {
+  event.preventDefault();
+  const dados = {
+    name: fields.name.value.trim(), sku: fields.sku.value.trim(),
+    price: Number(fields.price.value), salePrice: fields.salePrice.value ? Number(fields.salePrice.value) : null,
+    stock: Number(fields.stock.value || 0), image: fields.image.value.trim(),
+    category: fields.category.value, description: fields.description.value.trim(),
+    active: fields.active.checked
+  };
+  saveButton.disabled = true;
+  formMessage.textContent = 'Salvando...';
+  try {
+    const path = produtoEditando ? '/produtos/' + produtoEditando : '/produtos';
+    await api(path, { method: produtoEditando ? 'PUT' : 'POST', headers: authHeaders(), body: JSON.stringify(dados) });
+    resetarFormulario();
+    await carregarProdutos();
+    formMessage.textContent = 'Produto salvo com sucesso.';
+  } catch (erro) {
+    formMessage.textContent = erro.message;
+    formMessage.className = 'admin-message error';
+  } finally { saveButton.disabled = false; }
+});
+
+productsContainer.addEventListener('click', async event => {
+  const botao = event.target.closest('button');
+  if (!botao) return;
+  const produto = produtos.find(item => String(item.id) === String(botao.dataset.id));
+  if (!produto) return;
+
+  if (botao.dataset.action === 'edit') {
+    produtoEditando = produto.id;
+    Object.entries(fields).forEach(([key, input]) => {
+      if (key === 'active') input.checked = produto.active !== false;
+      else input.value = produto[key] ?? '';
+    });
+    formTitle.textContent = 'Editar produto';
+    saveButton.textContent = 'Salvar alterações';
+    cancelEdit.hidden = false;
+    form.scrollIntoView({ behavior: 'smooth' });
     return;
   }
 
-  fetch(
-    `${API_URL}/${produto.id}`,
-    {
-      method: 'DELETE'
+  if (botao.dataset.action === 'delete' && !confirm('Excluir "' + produto.name + '"?')) return;
+  try {
+    if (botao.dataset.action === 'visibility') {
+      await api('/produtos/' + produto.id, { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ active: produto.active === false }) });
     }
-  )
-    .then(resposta => {
+    if (botao.dataset.action === 'delete') {
+      await api('/produtos/' + produto.id, { method: 'DELETE', headers: authHeaders() });
+    }
+    await carregarProdutos();
+  } catch (erro) { alert(erro.message); }
+});
 
-      if (!resposta.ok) {
-        throw new Error(
-          'Erro ao excluir produto.'
-        );
-      }
-
-      return resposta.json();
-
-    })
-    .then(() => {
-
-      carregarProdutos();
-
-    })
-    .catch(erro => {
-
-      console.error(erro);
-
-      alert(
-        'Não foi possível excluir o produto.'
-      );
-
-    });
-
-}
-
-  }
-);
-
-
-// ==========================================
-// INICIAR
-// ==========================================
-
-carregarProdutos();
+cancelEdit.addEventListener('click', resetarFormulario);
+document.getElementById('logoutButton').addEventListener('click', logout);
+verificarSessao();
