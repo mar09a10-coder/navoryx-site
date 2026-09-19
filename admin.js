@@ -38,7 +38,12 @@ function escapeHtml(value) {
 function formatarPreco(valor) {
   return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
-function mostrarApp() { loginView.hidden = true; adminApp.hidden = false; carregarProdutos(); }
+function mostrarApp() {
+  loginView.hidden = true;
+  adminApp.hidden = false;
+  carregarProdutos();
+  carregarConfiguracoesSite();
+}
 function mostrarLogin() { adminApp.hidden = true; loginView.hidden = false; }
 function logout() { sessionStorage.removeItem(TOKEN_KEY); produtoEditando = null; mostrarLogin(); }
 
@@ -174,4 +179,82 @@ productsContainer.addEventListener('click', async event => {
 
 cancelEdit.addEventListener('click', resetarFormulario);
 document.getElementById('logoutButton').addEventListener('click', logout);
+
+// ==========================================
+// CONFIGURAÇÕES DO SITE
+// ==========================================
+
+const siteConfigForm = document.getElementById('siteConfigForm');
+const siteConfigMessage = document.getElementById('siteConfigMessage');
+const saveSiteConfigButton = document.getElementById('saveSiteConfigButton');
+
+const siteConfigFields = {
+  nome_loja: document.getElementById('siteName'),
+  logo_url: document.getElementById('siteLogo'),
+  texto_topo: document.getElementById('siteTopText'),
+  titulo_banner: document.getElementById('siteBannerTitle'),
+  subtitulo_banner: document.getElementById('siteBannerSubtitle'),
+  banner_url: document.getElementById('siteBannerUrl'),
+  cor_principal: document.getElementById('sitePrimaryColor'),
+  cor_secundaria: document.getElementById('siteSecondaryColor'),
+  whatsapp: document.getElementById('siteWhatsapp'),
+  email: document.getElementById('siteEmail'),
+  texto_rodape: document.getElementById('siteFooterText')
+};
+
+async function carregarConfiguracoesSite() {
+  if (!siteConfigForm) return;
+  siteConfigMessage.textContent = 'Carregando configurações...';
+  siteConfigMessage.className = 'admin-message';
+
+  try {
+    const config = await api('/site-config');
+    Object.entries(siteConfigFields).forEach(([campo, input]) => {
+      if (input && config[campo] !== undefined && config[campo] !== null) {
+        input.value = config[campo];
+      }
+    });
+    siteConfigMessage.textContent = '';
+  } catch (erro) {
+    siteConfigMessage.textContent = erro.message;
+    siteConfigMessage.className = 'admin-message error';
+  }
+}
+
+if (siteConfigForm) {
+  siteConfigForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    const config = {};
+
+    Object.entries(siteConfigFields).forEach(([campo, input]) => {
+      config[campo] = input ? input.value.trim() : '';
+    });
+
+    saveSiteConfigButton.disabled = true;
+    siteConfigMessage.textContent = 'Salvando configurações...';
+    siteConfigMessage.className = 'admin-message';
+
+    try {
+      const salvo = await api('/site-config', {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify(config)
+      });
+
+      Object.entries(siteConfigFields).forEach(([campo, input]) => {
+        if (input && salvo[campo] !== undefined && salvo[campo] !== null) {
+          input.value = salvo[campo];
+        }
+      });
+
+      siteConfigMessage.textContent = 'Configurações salvas. A loja já foi atualizada.';
+    } catch (erro) {
+      siteConfigMessage.textContent = erro.message;
+      siteConfigMessage.className = 'admin-message error';
+    } finally {
+      saveSiteConfigButton.disabled = false;
+    }
+  });
+}
+
 verificarSessao();
