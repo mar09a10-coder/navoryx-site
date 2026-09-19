@@ -1214,167 +1214,92 @@ if (checkoutButton) {
 // BUSCA AUTOMÁTICA DE CEP
 // ==========================================
 
-const cepInput =
-  document.getElementById('cep');
+const cepInput = document.getElementById('cep');
+const enderecoInput = document.getElementById('endereco');
+const bairroInput = document.getElementById('bairro');
+const cidadeInput = document.getElementById('cidade');
+const estadoInput = document.getElementById('estado');
 
-const enderecoInput =
-  document.getElementById('endereco');
+let cepTimer;
+let cepRequest;
+let cepRevision = 0;
+let cepMessage;
 
-const bairroInput =
-  document.getElementById('bairro');
-
-const cidadeInput =
-  document.getElementById('cidade');
-
-const estadoInput =
-  document.getElementById('estado');
-
-
-async function buscarCep(cepInformado) {
-
-  const cepLimpo =
-    String(cepInformado || '')
-      .replace(/\D/g, '');
-
-  if (cepLimpo.length !== 8) {
-    return;
-  }
-
-  try {
-
-    if (cepInput) {
-      cepInput.disabled = true;
-    }
-
-    const resposta =
-      await fetch(
-        `https://viacep.com.br/ws/${cepLimpo}/json/`
-      );
-
-    if (!resposta.ok) {
-      throw new Error(
-        'Não foi possível consultar o CEP.'
-      );
-    }
-
-    const dados =
-      await resposta.json();
-
-    if (dados.erro) {
-
-      alert(
-        'CEP não encontrado. Confira o número digitado.'
-      );
-
-      return;
-    }
-
-    if (enderecoInput) {
-
-      enderecoInput.value =
-        dados.logradouro || '';
-    }
-
-    if (bairroInput) {
-
-      bairroInput.value =
-        dados.bairro || '';
-    }
-
-    if (cidadeInput) {
-
-      cidadeInput.value =
-        dados.localidade || '';
-    }
-
-    if (estadoInput) {
-
-      estadoInput.value =
-        dados.uf || '';
-    }
-
-    const numeroInput =
-      document.getElementById('numero');
-
-    if (numeroInput) {
-
-      numeroInput.focus();
-    }
-
-  } catch (erro) {
-
-    console.error(
-      'Erro ao buscar CEP:',
-      erro
-    );
-
-    alert(
-      'Não foi possível buscar o CEP agora. Tente novamente.'
-    );
-
-  } finally {
-
-    if (cepInput) {
-
-      cepInput.disabled =
-        false;
-
-      cepInput.focus();
-    }
+function mensagemCep(texto, invalido = false) {
+  if (!cepInput) return;
+  cepInput.setCustomValidity(invalido ? texto : '');
+  cepInput.setAttribute('aria-invalid', String(invalido));
+  if (cepMessage) {
+    cepMessage.textContent = texto;
+    cepMessage.style.color = invalido ? '#fca5a5' : '#aebccc';
   }
 }
 
+async function buscarCep(cepLimpo, revision = cepRevision) {
+  if (!cepInput || !/^\d{8}$/.test(cepLimpo)) return;
+  const controller = new AbortController();
+  cepRequest = controller;
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  const atual = () => revision === cepRevision &&
+    cepInput.value.replace(/\D/g, '') === cepLimpo;
+  // Preserve edits the customer makes while the lookup is running.
+  const inputs = [enderecoInput, bairroInput, cidadeInput, estadoInput];
+  const anteriores = inputs.map(input => input ? input.value : '');
+  mensagemCep('Consultando CEP...');
+  try {
+    const resposta = await fetch(
+      'https://viacep.com.br/ws/' + cepLimpo + '/json/',
+      { signal: controller.signal }
+    );
+    if (!resposta.ok) throw new Error('Consulta indisponível');
+    const dados = await resposta.json();
+    if (!atual()) return;
+    if (dados.erro) {
+      mensagemCep('CEP não encontrado. Confira e corrija o número digitado.', true);
+      return;
+    }
+    const valores = [dados.logradouro, dados.bairro, dados.localidade, dados.uf];
+    inputs.forEach((input, index) => {
+      if (input && input.value === anteriores[index]) input.value = valores[index] || '';
+    });
+    mensagemCep('CEP localizado. Confira o endereço e informe o número.');
+  } catch (_) {
+    if (atual()) {
+      mensagemCep('Consulta de CEP indisponível. Preencha o endereço manualmente ou edite o CEP para tentar novamente.');
+    }
+  } finally {
+    clearTimeout(timeout);
+    if (cepRequest === controller) cepRequest = null;
+  }
+}
 
 if (cepInput) {
+  cepMessage = document.createElement('p');
+  cepMessage.id = 'cepMessage';
+  cepMessage.setAttribute('role', 'status');
+  cepMessage.setAttribute('aria-live', 'polite');
+  cepMessage.style.cssText = 'font-size:13px;line-height:1.5;margin:6px 0 0;color:#aebccc';
+  cepInput.insertAdjacentElement('afterend', cepMessage);
+  const describedBy = cepInput.getAttribute('aria-describedby') || '';
+  cepInput.setAttribute('aria-describedby', (describedBy + ' cepMessage').trim());
+  cepInput.maxLength = 9;
+  cepInput.pattern = '[0-9]{5}-?[0-9]{3}';
+  cepInput.title = 'Informe um CEP com 8 números.';
 
-  cepInput.addEventListener(
-    'input',
-    function() {
-
-      let valor =
-        cepInput.value
-          .replace(/\D/g, '')
-          .slice(0, 8);
-
-      if (valor.length > 5) {
-
-        valor =
-          valor.slice(0, 5) +
-          '-' +
-          valor.slice(5);
-      }
-
-      cepInput.value =
-        valor;
-
-      const cepNumerico =
-        valor.replace(/\D/g, '');
-
-      if (cepNumerico.length === 8) {
-
-        buscarCep(
-          cepNumerico
-        );
-      }
+  cepInput.addEventListener('input', function() {
+    clearTimeout(cepTimer);
+    cepRevision += 1;
+    if (cepRequest) cepRequest.abort();
+    const numeros = cepInput.value.replace(/\D/g, '').slice(0, 8);
+    cepInput.value = numeros.length > 5
+      ? numeros.slice(0, 5) + '-' + numeros.slice(5)
+      : numeros;
+    mensagemCep('');
+    if (numeros.length === 8) {
+      const revision = cepRevision;
+      cepTimer = setTimeout(() => buscarCep(numeros, revision), 350);
     }
-  );
-
-  cepInput.addEventListener(
-    'blur',
-    function() {
-
-      const cepNumerico =
-        cepInput.value
-          .replace(/\D/g, '');
-
-      if (cepNumerico.length === 8) {
-
-        buscarCep(
-          cepNumerico
-        );
-      }
-    }
-  );
+  });
 }
 
 
