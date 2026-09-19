@@ -1838,3 +1838,87 @@ renderizarResumoPagamento();
 atualizarContadorCarrinho();
 
 renderizarCarrinho();
+
+
+// ==========================================
+// CONFIGURAÇÕES VISUAIS DA LOJA
+// ==========================================
+
+async function carregarConfiguracoesDaLoja() {
+  try {
+    const resposta = await fetch(
+      'https://navoryx-backend-2.onrender.com/site-config'
+    );
+
+    if (!resposta.ok) return;
+
+    const config = await resposta.json();
+    const topbar = document.querySelector('.topbar');
+    const logo = document.querySelector('.logo-navoryx');
+    const hero = document.querySelector('.hero-banner');
+    const heroTitle = document.querySelector('.hero-content h1');
+    const heroSubtitle = document.querySelector('.hero-content .eyebrow');
+    const whatsappLink = document.querySelector('a[href^="https://wa.me/"]');
+    const emailLink = document.querySelector('a[href^="mailto:"]');
+    const footerLogo = document.querySelector('.footer-logo');
+    const footerText = footerLogo && footerLogo.parentElement
+      ? footerLogo.parentElement.querySelector('p')
+      : null;
+
+    if (config.nome_loja) {
+      document.title = config.nome_loja + ' | Tecnologia e Acessórios';
+      if (footerLogo) footerLogo.textContent = config.nome_loja.toUpperCase();
+    }
+    if (topbar && config.texto_topo) topbar.textContent = config.texto_topo;
+    if (logo && config.logo_url) {
+      logo.src = config.logo_url;
+      logo.alt = config.nome_loja || 'Navoryx';
+    }
+    if (hero && config.banner_url) {
+      hero.style.backgroundImage =
+        'linear-gradient(90deg, rgba(0,0,0,.92) 0%, rgba(0,0,0,.68) 43%, rgba(0,0,0,.25) 100%), url("' +
+        String(config.banner_url).replace(/"/g, '%22') + '")';
+    }
+    if (heroTitle && config.titulo_banner) heroTitle.textContent = config.titulo_banner;
+    if (heroSubtitle && config.subtitulo_banner) heroSubtitle.textContent = config.subtitulo_banner;
+    if (whatsappLink && config.whatsapp) {
+      const numero = String(config.whatsapp).replace(/\D/g, '');
+      whatsappLink.href =
+        'https://wa.me/' + (numero.startsWith('55') ? numero : '55' + numero) +
+        '?text=' + encodeURIComponent('Olá, vim pelo site da ' + (config.nome_loja || 'Navoryx') + ' e gostaria de atendimento.');
+    }
+    if (emailLink && config.email) emailLink.href = 'mailto:' + config.email;
+    if (footerText && config.texto_rodape) footerText.textContent = config.texto_rodape;
+
+    const corPrincipal = /^#[0-9a-f]{6}$/i.test(config.cor_principal || '')
+      ? config.cor_principal
+      : '#05070b';
+    const corSecundaria = /^#[0-9a-f]{6}$/i.test(config.cor_secundaria || '')
+      ? config.cor_secundaria
+      : '#008cff';
+
+    document.documentElement.style.setProperty('--navoryx-primary', corPrincipal);
+    document.documentElement.style.setProperty('--navoryx-secondary', corSecundaria);
+
+    let dynamicStyle = document.getElementById('navoryxDynamicTheme');
+    if (!dynamicStyle) {
+      dynamicStyle = document.createElement('style');
+      dynamicStyle.id = 'navoryxDynamicTheme';
+      document.head.appendChild(dynamicStyle);
+    }
+
+    dynamicStyle.textContent = `
+      body { background-color: ${corPrincipal}; }
+      .cart-button, .search button, .hero-btn, .contact-button,
+      .product-buy-button, .checkout-confirm-button {
+        background: linear-gradient(135deg, ${corSecundaria}, ${corSecundaria}) !important;
+      }
+      .nav a:hover, .footer-logo, .eyebrow { color: ${corSecundaria} !important; }
+      .search input:focus { border-color: ${corSecundaria} !important; }
+    `;
+  } catch (erro) {
+    console.warn('Não foi possível carregar as configurações visuais da loja.', erro);
+  }
+}
+
+carregarConfiguracoesDaLoja();
