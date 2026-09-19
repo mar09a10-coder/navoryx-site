@@ -43,6 +43,7 @@ function mostrarApp() {
   adminApp.hidden = false;
   carregarProdutos();
   carregarConfiguracoesSite();
+  carregarPedidos();
 }
 function mostrarLogin() { adminApp.hidden = true; loginView.hidden = false; }
 function logout() { sessionStorage.removeItem(TOKEN_KEY); produtoEditando = null; mostrarLogin(); }
@@ -179,6 +180,71 @@ productsContainer.addEventListener('click', async event => {
 
 cancelEdit.addEventListener('click', resetarFormulario);
 document.getElementById('logoutButton').addEventListener('click', logout);
+
+
+// ==========================================
+// PEDIDOS
+// ==========================================
+
+const ordersContainer = document.getElementById('adminOrders');
+const refreshOrdersButton = document.getElementById('refreshOrdersButton');
+
+function nomeStatusPedido(status) {
+  return ({
+    creating: 'Criando pagamento',
+    pending: 'Aguardando pagamento',
+    in_process: 'Em análise',
+    approved: 'Pagamento aprovado',
+    approved_stock_review: 'Aprovado — conferir estoque',
+    rejected: 'Pagamento recusado',
+    cancelled: 'Cancelado',
+    refunded: 'Reembolsado',
+    charged_back: 'Contestação/chargeback',
+    payment_amount_mismatch: 'Valor divergente',
+    error: 'Erro ao criar pagamento'
+  })[status] || status || 'Desconhecido';
+}
+
+async function carregarPedidos() {
+  if (!ordersContainer) return;
+  ordersContainer.innerHTML = '<p>Carregando pedidos...</p>';
+
+  try {
+    const pedidos = await api('/admin/pedidos', { headers: authHeaders() });
+
+    if (!pedidos.length) {
+      ordersContainer.innerHTML = '<p>Nenhum pedido registrado até o momento.</p>';
+      return;
+    }
+
+    ordersContainer.innerHTML = pedidos.map(pedido => {
+      const cliente = pedido.cliente || {};
+      const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
+      const resumo = itens.map(item =>
+        Number(item.quantity || 0) + '× ' + escapeHtml(item.name || 'Produto')
+      ).join('<br>');
+
+      return `
+        <div class="admin-product-item">
+          <div class="admin-product-info">
+            <strong>Pedido ${escapeHtml(String(pedido.id).slice(0, 8))}</strong>
+            <span>${formatarPreco(pedido.total)}</span>
+            <small>${escapeHtml(nomeStatusPedido(pedido.status))}</small>
+            <small>${escapeHtml(cliente.nome || 'Cliente não informado')} • ${escapeHtml(cliente.email || 'sem e-mail')}</small>
+            <small>${resumo}</small>
+            <small>${new Date(pedido.criado_em).toLocaleString('pt-BR')}</small>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (erro) {
+    ordersContainer.innerHTML = '<p>' + escapeHtml(erro.message) + '</p>';
+  }
+}
+
+if (refreshOrdersButton) {
+  refreshOrdersButton.addEventListener('click', carregarPedidos);
+}
 
 // ==========================================
 // CONFIGURAÇÕES DO SITE
