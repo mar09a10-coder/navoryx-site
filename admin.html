@@ -46,6 +46,78 @@
         </div>
         <div class="admin-dashboard">
           <div class="admin-stat"><span>Produtos cadastrados</span><strong id="adminProductCount">0</strong></div>
+
+          <div class="admin-card">
+            <div class="admin-list-header">
+              <div>
+                <h2>Configurações do site</h2>
+                <p>Altere informações visuais e de contato sem precisar editar código.</p>
+              </div>
+            </div>
+
+            <form id="siteConfigForm">
+              <div class="admin-form-grid">
+                <div class="admin-field">
+                  <label for="siteName">Nome da loja</label>
+                  <input type="text" id="siteName" maxlength="120">
+                </div>
+
+                <div class="admin-field">
+                  <label for="siteLogo">Logo (URL ou caminho)</label>
+                  <input type="text" id="siteLogo" placeholder="img/logo.png ou https://...">
+                </div>
+
+                <div class="admin-field admin-field-full">
+                  <label for="siteTopText">Texto do topo</label>
+                  <input type="text" id="siteTopText" maxlength="220">
+                </div>
+
+                <div class="admin-field">
+                  <label for="siteBannerTitle">Título do banner</label>
+                  <input type="text" id="siteBannerTitle" maxlength="180">
+                </div>
+
+                <div class="admin-field">
+                  <label for="siteBannerSubtitle">Subtítulo do banner</label>
+                  <input type="text" id="siteBannerSubtitle" maxlength="260">
+                </div>
+
+                <div class="admin-field admin-field-full">
+                  <label for="siteBannerUrl">Imagem do banner (URL ou caminho)</label>
+                  <input type="text" id="siteBannerUrl" placeholder="img/banner.jpg ou https://...">
+                </div>
+
+                <div class="admin-field">
+                  <label for="sitePrimaryColor">Cor principal</label>
+                  <input type="color" id="sitePrimaryColor" value="#111827">
+                </div>
+
+                <div class="admin-field">
+                  <label for="siteSecondaryColor">Cor secundária</label>
+                  <input type="color" id="siteSecondaryColor" value="#7dd3fc">
+                </div>
+
+                <div class="admin-field">
+                  <label for="siteWhatsapp">WhatsApp</label>
+                  <input type="text" id="siteWhatsapp" placeholder="27988732742">
+                </div>
+
+                <div class="admin-field">
+                  <label for="siteEmail">E-mail</label>
+                  <input type="email" id="siteEmail" placeholder="navoryx.atendimento@gmail.com">
+                </div>
+
+                <div class="admin-field admin-field-full">
+                  <label for="siteFooterText">Texto do rodapé</label>
+                  <textarea id="siteFooterText" rows="3"></textarea>
+                </div>
+              </div>
+
+              <p id="siteConfigMessage" class="admin-message" aria-live="polite"></p>
+              <button id="saveSiteConfigButton" type="submit" class="product-buy-button">Salvar configurações do site</button>
+            </form>
+          </div>
+
           <div class="admin-card">
             <div class="admin-toolbar"><h2 id="formTitle">Cadastrar produto</h2><button id="cancelEdit" class="admin-secondary" type="button" hidden>Cancelar edição</button></div>
             <form id="adminProductForm">
