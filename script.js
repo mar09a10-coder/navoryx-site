@@ -1819,6 +1819,7 @@ if (payButton) {
         );
 
         alert(
+          erro.message ||
           'Não foi possível abrir o pagamento. Verifique a conexão com o Mercado Pago.'
         );
 
