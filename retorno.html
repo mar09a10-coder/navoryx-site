@@ -88,78 +88,53 @@
   </main>
 
   <script>
-    const parametros = new URLSearchParams(window.location.search);
-    const pedidoId = parametros.get('pedido');
-    const statusIcon = document.getElementById('statusIcon');
-    const statusTitle = document.getElementById('statusTitle');
-    const statusMessage = document.getElementById('statusMessage');
+    const parametros =
+      new URLSearchParams(window.location.search);
 
-    function exibirStatus(status) {
-      if (status === 'approved') {
-        statusIcon.textContent = '✅';
-        statusTitle.textContent = 'Pagamento aprovado!';
-        statusMessage.textContent =
-          'Seu pagamento foi confirmado com segurança. Obrigado por comprar na Navoryx.';
-        localStorage.removeItem('navoryxCart');
-        return;
-      }
+    const status =
+      parametros.get('status');
 
-      if (status === 'pending' || status === 'in_process' || status === 'creating') {
-        statusIcon.textContent = '⏳';
-        statusTitle.textContent = 'Pagamento em processamento';
-        statusMessage.textContent =
-          'Estamos aguardando a confirmação do Mercado Pago. Você pode voltar mais tarde; o pedido continuará registrado.';
-        return;
-      }
+    const statusIcon =
+      document.getElementById('statusIcon');
 
-      if (status === 'approved_stock_review') {
-        statusIcon.textContent = '⚠️';
-        statusTitle.textContent = 'Pagamento confirmado';
-        statusMessage.textContent =
-          'Recebemos o pagamento e o pedido está em conferência de estoque. Entre em contato com o atendimento.';
-        localStorage.removeItem('navoryxCart');
-        return;
-      }
+    const statusTitle =
+      document.getElementById('statusTitle');
+
+    const statusMessage =
+      document.getElementById('statusMessage');
+
+    if (status === 'approved') {
+
+      statusIcon.textContent = '✅';
+
+      statusTitle.textContent =
+        'Pagamento aprovado!';
+
+      statusMessage.textContent =
+        'Seu pagamento foi aprovado com sucesso. Obrigado por comprar na Navoryx.';
+
+      localStorage.removeItem('navoryxCart');
+
+    } else if (status === 'pending') {
+
+      statusIcon.textContent = '⏳';
+
+      statusTitle.textContent =
+        'Pagamento pendente';
+
+      statusMessage.textContent =
+        'Seu pagamento ainda está sendo processado. Assim que houver uma atualização, o Mercado Pago informará o resultado.';
+
+    } else {
 
       statusIcon.textContent = '❌';
-      statusTitle.textContent = 'Pagamento não aprovado';
+
+      statusTitle.textContent =
+        'Pagamento não aprovado';
+
       statusMessage.textContent =
         'O pagamento não foi concluído. Você pode voltar para a loja e tentar novamente.';
     }
-
-    async function consultarPedido(tentativa = 0) {
-      if (!pedidoId) {
-        exibirStatus('unknown');
-        return;
-      }
-
-      try {
-        const resposta = await fetch(
-          'https://navoryx-backend-2.onrender.com/pedidos/' +
-          encodeURIComponent(pedidoId) +
-          '/status'
-        );
-        if (!resposta.ok) throw new Error('Pedido não encontrado.');
-        const pedido = await resposta.json();
-
-        if (
-          tentativa < 3 &&
-          (pedido.status === 'pending' || pedido.status === 'creating')
-        ) {
-          setTimeout(() => consultarPedido(tentativa + 1), 2000);
-          return;
-        }
-
-        exibirStatus(pedido.status);
-      } catch (_) {
-        statusIcon.textContent = '⏳';
-        statusTitle.textContent = 'Verificação em andamento';
-        statusMessage.textContent =
-          'Não conseguimos consultar o pedido agora. Ele permanece registrado e poderá ser acompanhado pelo atendimento.';
-      }
-    }
-
-    consultarPedido();
   </script>
 
 </body>

@@ -1214,92 +1214,167 @@ if (checkoutButton) {
 // BUSCA AUTOMÁTICA DE CEP
 // ==========================================
 
-const cepInput = document.getElementById('cep');
-const enderecoInput = document.getElementById('endereco');
-const bairroInput = document.getElementById('bairro');
-const cidadeInput = document.getElementById('cidade');
-const estadoInput = document.getElementById('estado');
+const cepInput =
+  document.getElementById('cep');
 
-let cepTimer;
-let cepRequest;
-let cepRevision = 0;
-let cepMessage;
+const enderecoInput =
+  document.getElementById('endereco');
 
-function mensagemCep(texto, invalido = false) {
-  if (!cepInput) return;
-  cepInput.setCustomValidity(invalido ? texto : '');
-  cepInput.setAttribute('aria-invalid', String(invalido));
-  if (cepMessage) {
-    cepMessage.textContent = texto;
-    cepMessage.style.color = invalido ? '#fca5a5' : '#aebccc';
+const bairroInput =
+  document.getElementById('bairro');
+
+const cidadeInput =
+  document.getElementById('cidade');
+
+const estadoInput =
+  document.getElementById('estado');
+
+
+async function buscarCep(cepInformado) {
+
+  const cepLimpo =
+    String(cepInformado || '')
+      .replace(/\D/g, '');
+
+  if (cepLimpo.length !== 8) {
+    return;
   }
-}
 
-async function buscarCep(cepLimpo, revision = cepRevision) {
-  if (!cepInput || !/^\d{8}$/.test(cepLimpo)) return;
-  const controller = new AbortController();
-  cepRequest = controller;
-  const timeout = setTimeout(() => controller.abort(), 8000);
-  const atual = () => revision === cepRevision &&
-    cepInput.value.replace(/\D/g, '') === cepLimpo;
-  // Preserve edits the customer makes while the lookup is running.
-  const inputs = [enderecoInput, bairroInput, cidadeInput, estadoInput];
-  const anteriores = inputs.map(input => input ? input.value : '');
-  mensagemCep('Consultando CEP...');
   try {
-    const resposta = await fetch(
-      'https://viacep.com.br/ws/' + cepLimpo + '/json/',
-      { signal: controller.signal }
-    );
-    if (!resposta.ok) throw new Error('Consulta indisponível');
-    const dados = await resposta.json();
-    if (!atual()) return;
+
+    if (cepInput) {
+      cepInput.disabled = true;
+    }
+
+    const resposta =
+      await fetch(
+        `https://viacep.com.br/ws/${cepLimpo}/json/`
+      );
+
+    if (!resposta.ok) {
+      throw new Error(
+        'Não foi possível consultar o CEP.'
+      );
+    }
+
+    const dados =
+      await resposta.json();
+
     if (dados.erro) {
-      mensagemCep('CEP não encontrado. Confira e corrija o número digitado.', true);
+
+      alert(
+        'CEP não encontrado. Confira o número digitado.'
+      );
+
       return;
     }
-    const valores = [dados.logradouro, dados.bairro, dados.localidade, dados.uf];
-    inputs.forEach((input, index) => {
-      if (input && input.value === anteriores[index]) input.value = valores[index] || '';
-    });
-    mensagemCep('CEP localizado. Confira o endereço e informe o número.');
-  } catch (_) {
-    if (atual()) {
-      mensagemCep('Consulta de CEP indisponível. Preencha o endereço manualmente ou edite o CEP para tentar novamente.');
+
+    if (enderecoInput) {
+
+      enderecoInput.value =
+        dados.logradouro || '';
     }
+
+    if (bairroInput) {
+
+      bairroInput.value =
+        dados.bairro || '';
+    }
+
+    if (cidadeInput) {
+
+      cidadeInput.value =
+        dados.localidade || '';
+    }
+
+    if (estadoInput) {
+
+      estadoInput.value =
+        dados.uf || '';
+    }
+
+    const numeroInput =
+      document.getElementById('numero');
+
+    if (numeroInput) {
+
+      numeroInput.focus();
+    }
+
+  } catch (erro) {
+
+    console.error(
+      'Erro ao buscar CEP:',
+      erro
+    );
+
+    alert(
+      'Não foi possível buscar o CEP agora. Tente novamente.'
+    );
+
   } finally {
-    clearTimeout(timeout);
-    if (cepRequest === controller) cepRequest = null;
+
+    if (cepInput) {
+
+      cepInput.disabled =
+        false;
+
+      cepInput.focus();
+    }
   }
 }
 
-if (cepInput) {
-  cepMessage = document.createElement('p');
-  cepMessage.id = 'cepMessage';
-  cepMessage.setAttribute('role', 'status');
-  cepMessage.setAttribute('aria-live', 'polite');
-  cepMessage.style.cssText = 'font-size:13px;line-height:1.5;margin:6px 0 0;color:#aebccc';
-  cepInput.insertAdjacentElement('afterend', cepMessage);
-  const describedBy = cepInput.getAttribute('aria-describedby') || '';
-  cepInput.setAttribute('aria-describedby', (describedBy + ' cepMessage').trim());
-  cepInput.maxLength = 9;
-  cepInput.pattern = '[0-9]{5}-?[0-9]{3}';
-  cepInput.title = 'Informe um CEP com 8 números.';
 
-  cepInput.addEventListener('input', function() {
-    clearTimeout(cepTimer);
-    cepRevision += 1;
-    if (cepRequest) cepRequest.abort();
-    const numeros = cepInput.value.replace(/\D/g, '').slice(0, 8);
-    cepInput.value = numeros.length > 5
-      ? numeros.slice(0, 5) + '-' + numeros.slice(5)
-      : numeros;
-    mensagemCep('');
-    if (numeros.length === 8) {
-      const revision = cepRevision;
-      cepTimer = setTimeout(() => buscarCep(numeros, revision), 350);
+if (cepInput) {
+
+  cepInput.addEventListener(
+    'input',
+    function() {
+
+      let valor =
+        cepInput.value
+          .replace(/\D/g, '')
+          .slice(0, 8);
+
+      if (valor.length > 5) {
+
+        valor =
+          valor.slice(0, 5) +
+          '-' +
+          valor.slice(5);
+      }
+
+      cepInput.value =
+        valor;
+
+      const cepNumerico =
+        valor.replace(/\D/g, '');
+
+      if (cepNumerico.length === 8) {
+
+        buscarCep(
+          cepNumerico
+        );
+      }
     }
-  });
+  );
+
+  cepInput.addEventListener(
+    'blur',
+    function() {
+
+      const cepNumerico =
+        cepInput.value
+          .replace(/\D/g, '');
+
+      if (cepNumerico.length === 8) {
+
+        buscarCep(
+          cepNumerico
+        );
+      }
+    }
+  );
 }
 
 
@@ -1680,18 +1755,15 @@ if (payButton) {
 
         const items =
           carrinho.map(item => ({
-            id: item.id,
-            quantity: Number(item.quantity) || 1
-          }));
+            name:
+              String(item.name || 'Produto'),
 
-        let customer = {};
-        try {
-          customer = JSON.parse(
-            localStorage.getItem('navoryxCheckout')
-          ) || {};
-        } catch (_) {
-          customer = {};
-        }
+            quantity:
+              Number(item.quantity) || 1,
+
+            price:
+              Number(item.price) || 0
+          }));
 
         const resposta =
           await fetch(
@@ -1706,8 +1778,7 @@ if (payButton) {
 
               body:
                 JSON.stringify({
-                  items,
-                  customer
+                  items
                 })
             }
           );
@@ -1744,7 +1815,6 @@ if (payButton) {
         );
 
         alert(
-          erro.message ||
           'Não foi possível abrir o pagamento. Verifique a conexão com o Mercado Pago.'
         );
 
@@ -1768,87 +1838,3 @@ renderizarResumoPagamento();
 atualizarContadorCarrinho();
 
 renderizarCarrinho();
-
-
-// ==========================================
-// CONFIGURAÇÕES VISUAIS DA LOJA
-// ==========================================
-
-async function carregarConfiguracoesDaLoja() {
-  try {
-    const resposta = await fetch(
-      'https://navoryx-backend-2.onrender.com/site-config'
-    );
-
-    if (!resposta.ok) return;
-
-    const config = await resposta.json();
-    const topbar = document.querySelector('.topbar');
-    const logo = document.querySelector('.logo-navoryx');
-    const hero = document.querySelector('.hero-banner');
-    const heroTitle = document.querySelector('.hero-content h1');
-    const heroSubtitle = document.querySelector('.hero-content .eyebrow');
-    const whatsappLink = document.querySelector('a[href^="https://wa.me/"]');
-    const emailLink = document.querySelector('a[href^="mailto:"]');
-    const footerLogo = document.querySelector('.footer-logo');
-    const footerText = footerLogo && footerLogo.parentElement
-      ? footerLogo.parentElement.querySelector('p')
-      : null;
-
-    if (config.nome_loja) {
-      document.title = config.nome_loja + ' | Tecnologia e Acessórios';
-      if (footerLogo) footerLogo.textContent = config.nome_loja.toUpperCase();
-    }
-    if (topbar && config.texto_topo) topbar.textContent = config.texto_topo;
-    if (logo && config.logo_url) {
-      logo.src = config.logo_url;
-      logo.alt = config.nome_loja || 'Navoryx';
-    }
-    if (hero && config.banner_url) {
-      hero.style.backgroundImage =
-        'linear-gradient(90deg, rgba(0,0,0,.92) 0%, rgba(0,0,0,.68) 43%, rgba(0,0,0,.25) 100%), url("' +
-        String(config.banner_url).replace(/"/g, '%22') + '")';
-    }
-    if (heroTitle && config.titulo_banner) heroTitle.textContent = config.titulo_banner;
-    if (heroSubtitle && config.subtitulo_banner) heroSubtitle.textContent = config.subtitulo_banner;
-    if (whatsappLink && config.whatsapp) {
-      const numero = String(config.whatsapp).replace(/\D/g, '');
-      whatsappLink.href =
-        'https://wa.me/' + (numero.startsWith('55') ? numero : '55' + numero) +
-        '?text=' + encodeURIComponent('Olá, vim pelo site da ' + (config.nome_loja || 'Navoryx') + ' e gostaria de atendimento.');
-    }
-    if (emailLink && config.email) emailLink.href = 'mailto:' + config.email;
-    if (footerText && config.texto_rodape) footerText.textContent = config.texto_rodape;
-
-    const corPrincipal = /^#[0-9a-f]{6}$/i.test(config.cor_principal || '')
-      ? config.cor_principal
-      : '#05070b';
-    const corSecundaria = /^#[0-9a-f]{6}$/i.test(config.cor_secundaria || '')
-      ? config.cor_secundaria
-      : '#008cff';
-
-    document.documentElement.style.setProperty('--navoryx-primary', corPrincipal);
-    document.documentElement.style.setProperty('--navoryx-secondary', corSecundaria);
-
-    let dynamicStyle = document.getElementById('navoryxDynamicTheme');
-    if (!dynamicStyle) {
-      dynamicStyle = document.createElement('style');
-      dynamicStyle.id = 'navoryxDynamicTheme';
-      document.head.appendChild(dynamicStyle);
-    }
-
-    dynamicStyle.textContent = `
-      body { background-color: ${corPrincipal}; }
-      .cart-button, .search button, .hero-btn, .contact-button,
-      .product-buy-button, .checkout-confirm-button {
-        background: linear-gradient(135deg, ${corSecundaria}, ${corSecundaria}) !important;
-      }
-      .nav a:hover, .footer-logo, .eyebrow { color: ${corSecundaria} !important; }
-      .search input:focus { border-color: ${corSecundaria} !important; }
-    `;
-  } catch (erro) {
-    console.warn('Não foi possível carregar as configurações visuais da loja.', erro);
-  }
-}
-
-carregarConfiguracoesDaLoja();
