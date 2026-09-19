@@ -1755,15 +1755,18 @@ if (payButton) {
 
         const items =
           carrinho.map(item => ({
-            name:
-              String(item.name || 'Produto'),
-
-            quantity:
-              Number(item.quantity) || 1,
-
-            price:
-              Number(item.price) || 0
+            id: item.id,
+            quantity: Number(item.quantity) || 1
           }));
+
+        let customer = {};
+        try {
+          customer = JSON.parse(
+            localStorage.getItem('navoryxCheckout')
+          ) || {};
+        } catch (_) {
+          customer = {};
+        }
 
         const resposta =
           await fetch(
@@ -1778,7 +1781,8 @@ if (payButton) {
 
               body:
                 JSON.stringify({
-                  items
+                  items,
+                  customer
                 })
             }
           );
