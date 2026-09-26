@@ -1,0 +1,10 @@
+ATUALIZACAO DO PAINEL NAVORYX — ABA INTEGRACOES
+
+Arquivos deste pacote: admin.html, admin.js e style.css.
+
+No GitHub, abra o repositorio mar09a10-coder/navoryx-site, branch main.
+Localize os arquivos atuais admin.html, admin.js e style.css (na mesma pasta em que o link do painel admin aponta para admin.html) e substitua-os pelos arquivos deste pacote, mantendo os mesmos caminhos.
+
+Ao confirmar o commit, o Render deve iniciar um novo deploy do servico navoryx-site. Aguarde o estado Live e recarregue o painel com Ctrl+Shift+R (ou abra em janela anonima). Entre novamente e procure a aba Integrações.
+
+A tela mostra estados informados pelo backend; ela nao publica anuncios. Para conectar o Mercado Livre, o backend tambem precisa estar atualizado e configurado com as credenciais OAuth do aplicativo.

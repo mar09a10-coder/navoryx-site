@@ -5,13 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Painel Administrativo | Navoryx</title>
   <link rel="icon" type="image/png" href="img/favicon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20260926-central3">
   <style>
     .admin-login{max-width:430px;margin:70px auto;}.admin-login[hidden],.admin-app[hidden]{display:none}
     .admin-message{min-height:24px;margin:12px 0;color:#7dd3fc}.admin-message.error{color:#fca5a5}
     .admin-toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
     .admin-secondary{border:1px solid #334155;background:#111827;color:#fff;padding:11px 15px;border-radius:8px;cursor:pointer}
     .admin-field input[type="checkbox"]{width:auto;margin-right:8px}.admin-product-info small{display:block;margin-top:5px}
+    .admin-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 24px}.admin-tab{border:1px solid #334155;background:#111827;color:#cbd5e1;padding:11px 16px;border-radius:9px;cursor:pointer}.admin-tab[aria-selected="true"]{background:#2563eb;border-color:#2563eb;color:#fff}.admin-panel[hidden]{display:none}.admin-preview{border:1px solid #334155;border-radius:14px;overflow:hidden;background:#0f172a;margin-top:18px}.admin-preview-banner{min-height:145px;padding:22px;display:flex;align-items:center;background:linear-gradient(110deg,#111827,#2563eb);background-size:cover;background-position:center}.admin-preview-banner h3{max-width:430px;margin:0;color:white;font-size:22px}.admin-preview-bar{padding:10px 16px;color:white;font-size:13px}.admin-preview-note{color:#94a3b8;font-size:13px}.admin-preview-note.error{color:#fca5a5}.admin-field-full{grid-column:1/-1}.admin-subheading{margin:24px 0 8px;color:#e2e8f0}.admin-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.admin-color-field{display:flex;gap:9px;align-items:center}.admin-color-field input[type="color"]{width:48px;height:42px;padding:3px}
+    @media(max-width:640px){.admin-tabs{display:grid;grid-template-columns:1fr 1fr}.admin-tab{width:100%}}
   </style>
 </head>
 <body class="admin-body">
@@ -41,9 +43,15 @@
     <section id="adminApp" class="admin-section admin-app" hidden>
       <div class="container">
         <div class="admin-header admin-toolbar">
-          <div><span class="eyebrow">ADMINISTRAÇÃO</span><h1>Painel Navoryx</h1><p>Cadastre e edite produtos sem alterar código.</p></div>
+          <div><span class="eyebrow">CENTRAL DE CONTROLE</span><h1>Painel Navoryx</h1><p>Gerencie produtos e personalize as informações principais da loja.</p></div>
           <button id="logoutButton" class="admin-secondary" type="button">Sair</button>
         </div>
+        <nav class="admin-tabs" role="tablist" aria-label="Seções do painel">
+          <button class="admin-tab" type="button" role="tab" aria-selected="true" aria-controls="productsPanel" data-tab="products">Produtos e anúncios</button>
+          <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="sitePanel" data-tab="site">Aparência da loja</button>
+          <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="integrationsPanel" data-tab="integrations">Integrações</button>
+        </nav>
+        <section id="productsPanel" class="admin-panel" role="tabpanel" data-panel="products">
         <div class="admin-dashboard">
           <div class="admin-stat"><span>Produtos cadastrados</span><strong id="adminProductCount">0</strong></div>
           <div class="admin-card">
@@ -69,9 +77,51 @@
             <div id="adminProducts" class="admin-products"><p>Carregando...</p></div>
           </div>
         </div>
+        </section>
+        <section id="sitePanel" class="admin-panel" role="tabpanel" data-panel="site" hidden>
+          <div class="admin-card">
+            <span class="eyebrow">PERSONALIZAÇÃO</span><h2>Configurações da loja</h2>
+            <p>Edite os textos e contatos principais sem alterar os arquivos do site.</p>
+            <form id="siteConfigForm">
+              <div class="admin-form-grid">
+                <div class="admin-field"><label for="configStoreName">Nome da loja</label><input id="configStoreName" name="nome_loja" maxlength="80" required></div>
+                <div class="admin-field"><label for="configTopbar">Aviso no topo</label><input id="configTopbar" name="texto_topo" maxlength="240"></div>
+                <div class="admin-field admin-field-full"><label for="configLogo">Logo (URL ou caminho do arquivo)</label><input id="configLogo" name="logo_url" maxlength="1000" placeholder="img/logo.png"></div>
+                <div class="admin-field admin-field-full"><label for="configHeroTitle">Título do banner principal</label><input id="configHeroTitle" name="titulo_banner" maxlength="160"></div>
+                <div class="admin-field admin-field-full"><label for="configHeroSubtitle">Texto de apoio do banner</label><textarea id="configHeroSubtitle" name="subtitulo_banner" rows="2" maxlength="300"></textarea></div>
+                <div class="admin-field admin-field-full"><label for="configBanner">Imagem de fundo do banner (URL ou caminho)</label><input id="configBanner" name="banner_url" maxlength="1000" placeholder="img/banner.jpg"></div>
+                <div class="admin-field"><label for="configPrimary">Cor principal</label><div class="admin-color-field"><input id="configPrimaryPicker" type="color" aria-label="Selecionar cor principal"><input id="configPrimary" name="cor_principal" maxlength="7" placeholder="#111827"></div></div>
+                <div class="admin-field"><label for="configSecondary">Cor de destaque</label><div class="admin-color-field"><input id="configSecondaryPicker" type="color" aria-label="Selecionar cor de destaque"><input id="configSecondary" name="cor_secundaria" maxlength="7" placeholder="#2563eb"></div></div>
+                <h3 class="admin-subheading admin-field-full">Atendimento e rodapé</h3>
+                <div class="admin-field"><label for="configWhatsapp">WhatsApp (DDD + número)</label><input id="configWhatsapp" name="whatsapp" maxlength="30" placeholder="27988732742"></div>
+                <div class="admin-field"><label for="configEmail">E-mail de atendimento</label><input id="configEmail" type="email" name="email" maxlength="160"></div>
+                <div class="admin-field admin-field-full"><label for="configFooter">Texto do rodapé</label><input id="configFooter" name="texto_rodape" maxlength="300"></div>
+              </div>
+              <p id="siteConfigMessage" class="admin-message" aria-live="polite"></p>
+              <div class="admin-actions"><button id="saveSiteConfig" type="submit" class="product-buy-button">Salvar alterações da loja</button><button id="reloadSiteConfig" type="button" class="admin-secondary">Descartar alterações</button></div>
+            </form>
+            <div class="admin-preview" aria-live="polite"><div id="previewTopbar" class="admin-preview-bar">Compra segura • Ofertas selecionadas • Atendimento</div><div id="previewBanner" class="admin-preview-banner"><h3 id="previewTitle">Tecnologia para o seu dia a dia</h3></div></div>
+            <p class="admin-preview-note">Prévia simplificada. O site público é atualizado após salvar.</p>
+          </div>
+        </section>
+        <section id="integrationsPanel" class="admin-panel" role="tabpanel" data-panel="integrations" hidden>
+          <div class="admin-card"><span class="eyebrow">CONECTIVIDADE</span><h2>Integrações</h2><p>Veja o que o backend informa sobre a loja e o checkout.</p>
+            <div class="admin-stat"><span>Catálogo da loja</span><strong id="integrationCatalogStatus">Consultando…</strong></div>
+            <div class="admin-stat"><span>Credencial do Mercado Pago</span><strong id="integrationPaymentStatus">Consultando…</strong></div>
+            <h3 class="admin-subheading">Mercado Livre</h3>
+            <div class="admin-stat"><span>Conta vendedora</span><strong id="mercadoLivreStatus">Consultando…</strong></div>
+            <div class="admin-stat"><span>Modelo de publicação</span><strong id="mercadoLivreModel">Aguardando conexão</strong></div>
+            <p id="mercadoLivreMessage" class="admin-preview-note">A conexão usa autorização oficial da conta; não informe sua senha do Mercado Livre neste painel.</p>
+            <div class="admin-actions"><button id="connectMercadoLivre" class="admin-secondary" type="button">Conectar conta do Mercado Livre</button></div>
+            <div class="admin-stat"><span>Outros marketplaces</span><strong id="integrationMarketplacesStatus">Não conectados</strong></div>
+            <p id="integrationStatusNote" class="admin-preview-note">A presença da credencial não confirma que ela é válida nem testa uma cobrança.</p>
+            <div class="admin-actions"><button id="refreshIntegrations" class="admin-secondary" type="button">Atualizar status</button></div>
+            <p class="admin-preview-note">Publicação automática em marketplaces depende de credenciais e API de cada canal. Esta tela não envia anúncios para marketplaces. Para imagens, o cadastro aceita URL ou caminho de arquivo; upload pelo painel requer armazenamento de arquivos durável.</p>
+          </div>
+        </section>
       </div>
     </section>
   </main>
-  <script src="admin.js"></script>
+  <script src="admin.js?v=20260926-central3"></script>
 </body>
 </html>

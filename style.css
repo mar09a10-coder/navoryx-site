@@ -10,6 +10,15 @@
   box-sizing: border-box;
 }
 
+:root { --store-primary: #020409; --store-secondary: #078cff; }
+
+.nav .admin-access { color: #7dd3fc; font-weight: 700; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid #7dd3fc; outline-offset: 3px;
+}
+button:disabled { opacity: .6; cursor: wait; }
+.category-image-card[aria-current="true"] { outline: 2px solid #1687d9; outline-offset: 4px; }
+
 html {
   scroll-behavior: smooth;
 }
@@ -39,7 +48,7 @@ section {
 /* ===== BARRA SUPERIOR ===== */
 
 .topbar {
-  background: #020409;
+  background: var(--store-primary);
   color: #9fb3ca;
 
   text-align: center;
@@ -307,7 +316,7 @@ section {
 .hero-content h1 span {
   display: block;
 
-  color: #078cff;
+  color: var(--store-secondary);
 
   text-shadow:
     0 0 20px
@@ -335,12 +344,7 @@ section {
 
   padding: 15px 24px;
 
-  background:
-    linear-gradient(
-      135deg,
-      #0057ff,
-      #009cff
-    );
+  background: var(--store-secondary);
 
   color: #ffffff;
 
@@ -356,6 +360,9 @@ section {
 
   transition: 0.25s;
 }
+
+.hero-subtitle { max-width: 620px; margin: -12px 0 22px; color: #e2e8f0; font-size: 18px; line-height: 1.55; }
+.hero-subtitle[hidden] { display: none; }
 
 
 .hero-btn:hover {
