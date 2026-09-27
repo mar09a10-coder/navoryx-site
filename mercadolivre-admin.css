@@ -1,0 +1,23 @@
+#mlPanel [hidden]{display:none!important}
+#mlPanel .admin-card{margin-bottom:22px}
+#mlPanel fieldset{border:0;padding:0;margin:20px 0 0;min-width:0}
+#mlPanel input,#mlPanel select,#mlPanel textarea{max-width:100%;box-sizing:border-box}
+#mlPanel button:disabled{opacity:.55;cursor:wait}
+#mlPanel button,#mlPanel input,#mlPanel select,#mlPanel textarea,#mlPanel summary{scroll-margin-top:24px}
+#mlPanel button:focus-visible,#mlPanel summary:focus-visible{outline:3px solid #7dd3fc;outline-offset:3px}
+#mlPanel details{margin:18px 0}
+#mlPanel summary{cursor:pointer;color:#93c5fd;margin-bottom:14px}
+#mlPanel .admin-form-grid{margin:16px 0;gap:18px}
+#mlPanel .admin-actions{margin:10px 0}
+#mlPanel .admin-message,#mlPanel .ml-errors{overflow-wrap:anywhere}
+.ml-errors{color:#fca5a5;padding-left:24px}
+.ml-photo{display:flex;align-items:center;gap:18px}
+.ml-photo img{width:92px;height:92px;object-fit:contain;background:#fff;border-radius:10px}
+.ml-review-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:18px 0}
+.ml-review-grid dt{color:#94a3b8;font-size:13px;margin-bottom:5px}
+.ml-review-grid dd{margin:0;overflow-wrap:anywhere}
+.ml-review-description{white-space:pre-wrap;max-height:230px;overflow:auto;overflow-wrap:anywhere}
+.ml-history-item{padding:18px 0;border-top:1px solid #334155;overflow-wrap:anywhere}
+.ml-history-item p{margin:7px 0}
+.ml-history-item a,#mlReview a{color:#7dd3fc;text-decoration:underline}
+@media(max-width:640px){.ml-review-grid{grid-template-columns:1fr}.ml-photo{align-items:flex-start}#mlPanel .admin-actions{align-items:stretch;flex-direction:column}#mlPanel .admin-actions button{width:100%}}

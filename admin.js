@@ -42,9 +42,9 @@ function escapeHtml(value) {
 function formatarPreco(valor) {
   return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
-function mostrarApp() { loginView.hidden = true; adminApp.hidden = false; carregarProdutos(); carregarSiteConfig(); }
+function mostrarApp() { loginView.hidden = true; adminApp.hidden = false; carregarProdutos(); carregarSiteConfig(); document.dispatchEvent(new Event('navoryx:login')); }
 function mostrarLogin() { adminApp.hidden = true; loginView.hidden = false; }
-function logout() { sessionStorage.removeItem(TOKEN_KEY); produtoEditando = null; mostrarLogin(); }
+function logout() { sessionStorage.removeItem(TOKEN_KEY); produtoEditando = null; mostrarLogin(); document.dispatchEvent(new Event('navoryx:logout')); }
 
 async function api(path, options = {}) {
   const controller = new AbortController();

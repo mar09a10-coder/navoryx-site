@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Painel Administrativo | Navoryx</title>
   <link rel="icon" type="image/png" href="img/favicon.png">
-  <link rel="stylesheet" href="style.css?v=20260926-central3">
+  <link rel="stylesheet" href="style.css?v=20260927-cards">
+  <link rel="stylesheet" href="mercadolivre-admin.css?v=20260927-publicacao1">
   <style>
     .admin-login{max-width:430px;margin:70px auto;}.admin-login[hidden],.admin-app[hidden]{display:none}
     .admin-message{min-height:24px;margin:12px 0;color:#7dd3fc}.admin-message.error{color:#fca5a5}
@@ -50,6 +51,7 @@
           <button class="admin-tab" type="button" role="tab" aria-selected="true" aria-controls="productsPanel" data-tab="products">Produtos e anúncios</button>
           <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="sitePanel" data-tab="site">Aparência da loja</button>
           <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="integrationsPanel" data-tab="integrations">Integrações</button>
+          <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="mlPanel" data-tab="mercadolivre">Mercado Livre</button>
         </nav>
         <section id="productsPanel" class="admin-panel" role="tabpanel" data-panel="products">
         <div class="admin-dashboard">
@@ -116,12 +118,58 @@
             <div class="admin-stat"><span>Outros marketplaces</span><strong id="integrationMarketplacesStatus">Não conectados</strong></div>
             <p id="integrationStatusNote" class="admin-preview-note">A presença da credencial não confirma que ela é válida nem testa uma cobrança.</p>
             <div class="admin-actions"><button id="refreshIntegrations" class="admin-secondary" type="button">Atualizar status</button></div>
-            <p class="admin-preview-note">Publicação automática em marketplaces depende de credenciais e API de cada canal. Esta tela não envia anúncios para marketplaces. Para imagens, o cadastro aceita URL ou caminho de arquivo; upload pelo painel requer armazenamento de arquivos durável.</p>
+            <p class="admin-preview-note">Depois de conectar a conta, use a aba Mercado Livre para preparar e revisar um anúncio antes de publicar.</p>
           </div>
+        </section>
+        <section id="mlPanel" class="admin-panel" role="tabpanel" data-panel="mercadolivre" hidden>
+          <div class="admin-card">
+            <div class="admin-toolbar"><div><span class="eyebrow">MERCADO LIVRE</span><h2>Publicar um produto</h2></div><button id="mlRefresh" type="button" class="admin-secondary">Atualizar conta e histórico</button></div>
+            <p id="mlAccount">Abra esta aba para consultar sua conta.</p>
+            <p class="admin-preview-note">Escolha um produto, complete os dados da categoria e revise antes de publicar. Cada cadastro corresponde a um anúncio sem variações, com Mercado Envios.</p>
+            <p id="mlMessage" class="admin-message" role="status" aria-live="polite"></p>
+            <ul id="mlErrors" class="ml-errors" hidden></ul>
+            <form id="mlForm" hidden>
+              <div class="admin-field"><label for="mlProduct">Produto da Navoryx *</label><select id="mlProduct" required><option value="">Selecione um produto</option></select></div>
+              <fieldset id="mlFields" disabled>
+                <div class="admin-form-grid">
+                  <div class="admin-field admin-field-full"><label for="mlTitle" id="mlTitleLabel">Título do anúncio *</label><input id="mlTitle" maxlength="200" required><small id="mlTitleHint" class="admin-preview-note"></small></div>
+                  <div class="admin-field"><label for="mlPrice">Preço no Mercado Livre (R$) *</label><input id="mlPrice" type="number" min="0.01" step="0.01" required></div>
+                  <div class="admin-field"><label for="mlQuantity">Unidades para anunciar *</label><input id="mlQuantity" type="number" min="1" step="1" required><small id="mlStock" class="admin-preview-note"></small></div>
+                  <div class="admin-field admin-field-full"><label for="mlDescription">Descrição no Mercado Livre *</label><textarea id="mlDescription" rows="6" maxlength="10000" required></textarea><small class="admin-preview-note">Use texto simples. Estes ajustes não alteram o cadastro da loja.</small></div>
+                  <div class="admin-field admin-field-full ml-photo"><img id="mlPhoto" alt="Foto cadastrada do produto" hidden><p>Será enviada a foto do cadastro da Navoryx.</p></div>
+                  <div class="admin-field admin-field-full"><label for="mlCategory">Categoria do Mercado Livre *</label><div class="admin-actions"><button id="mlSearch" type="button" class="admin-secondary">Buscar categorias pelo nome</button></div><select id="mlCategory" required><option value="">Busque e selecione uma categoria</option></select></div>
+                  <details class="admin-field-full"><summary>Já tenho o código da categoria</summary><div class="admin-actions"><div class="admin-field"><label for="mlCategoryCode">Código da categoria</label><input id="mlCategoryCode" placeholder="MLB1234" maxlength="20"></div><button id="mlUseCategory" type="button" class="admin-secondary">Usar categoria</button></div></details>
+                </div>
+                <div id="mlCategoryFields" hidden>
+                  <h3 class="admin-subheading" id="mlCategoryName"></h3>
+                  <div class="admin-form-grid">
+                    <div class="admin-field"><label for="mlCondition">Condição *</label><select id="mlCondition" required></select></div>
+                    <div class="admin-field"><label for="mlListingType">Tipo de anúncio *</label><select id="mlListingType" required></select></div>
+                    <div class="admin-field admin-field-full"><label for="mlFreeShipping">Frete pelo Mercado Envios *</label><select id="mlFreeShipping" required><option value="">Selecione</option><option value="false">Sem oferecer frete grátis adicional</option><option value="true">Oferecer frete grátis ao comprador</option></select><small class="admin-preview-note">O Mercado Livre pode exigir frete grátis conforme o produto e o preço. Custos de envio ficam sujeitos às condições da sua conta.</small></div>
+                  </div>
+                  <h3 class="admin-subheading">Características do produto</h3>
+                  <p class="admin-preview-note">Preencha os campos com * e informe apenas dados reais do produto. Medidas devem incluir a unidade, como 15 cm.</p>
+                  <div id="mlAttributes" class="admin-form-grid"></div>
+                  <details id="mlOptionalDetails"><summary>Mais características (opcionais)</summary><div id="mlOptionalAttributes" class="admin-form-grid"></div></details>
+                  <h3 class="admin-subheading">Condições de venda</h3><div id="mlSaleTerms" class="admin-form-grid"></div>
+                  <p class="admin-preview-note">O estoque e o preço ainda são controlados separadamente na loja e no Mercado Livre. Reserve as unidades anunciadas para evitar vender o mesmo estoque duas vezes.</p>
+                  <button id="mlReviewButton" type="submit" class="product-buy-button">Validar e revisar anúncio</button>
+                </div>
+              </fieldset>
+            </form>
+          </div>
+          <div id="mlReview" class="admin-card" hidden>
+            <h2>Confira antes de publicar</h2><div id="mlReviewContent"></div>
+            <p class="admin-preview-note">A revisão vale por 15 minutos. O Mercado Livre faz a análise final após o envio.</p>
+            <div class="admin-field"><label><input id="mlConfirm" type="checkbox">Conferi os dados, o frete e as tarifas. Reservei as unidades para este canal e quero criar este anúncio na conta exibida.</label></div>
+            <button id="mlPublish" type="button" class="product-buy-button" disabled>Publicar no Mercado Livre</button>
+          </div>
+          <div class="admin-card"><h2>Envios feitos pela Navoryx</h2><p class="admin-preview-note">O histórico mostra o resultado do envio inicial. Alterações, pedidos e estoque no Mercado Livre ainda não são sincronizados.</p><div id="mlHistory">Nenhum histórico carregado.</div></div>
         </section>
       </div>
     </section>
   </main>
-  <script src="admin.js?v=20260926-central3"></script>
+  <script src="admin.js?v=20260927-publicacao1"></script>
+  <script src="mercadolivre-admin.js?v=20260927-publicacao1"></script>
 </body>
 </html>
