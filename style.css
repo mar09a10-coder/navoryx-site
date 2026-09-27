@@ -602,12 +602,22 @@ section {
 
   margin:
     0 0 10px;
+
+  /* Prévia de duas linhas nos cards; a página do produto exibe o texto completo. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  max-height: 2.9em;
+  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 
 /* PREÇO */
 
-.product-card strong {
+.product-card strong,
+.product-card .product-price {
   display: block;
 
   color: #006cff;
