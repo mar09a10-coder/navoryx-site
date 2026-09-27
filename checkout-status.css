@@ -1,0 +1,38 @@
+.checkout-status {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border: 1px solid #345875;
+  border-radius: 10px;
+  background: #10283a;
+  color: #d8edff;
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.checkout-status[hidden] {
+  display: none;
+}
+
+.checkout-status[data-type="error"] {
+  background: #351c22;
+  border-color: #8a4655;
+  color: #ffdce3;
+}
+
+.payment-cart-link {
+  display: inline-block;
+  margin-top: 18px;
+  color: #9dd8ff;
+  text-underline-offset: 4px;
+}
+
+.checkout-confirm-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+  transform: none;
+}
+
+.checkout-confirm-button[aria-busy="false"]:disabled {
+  cursor: not-allowed;
+}

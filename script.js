@@ -8,6 +8,67 @@ const STORE_API_URL =
 const CART_STORAGE_KEY = 'navoryxCart';
 const PRODUCTS_STORAGE_KEY = 'navoryxProducts';
 
+// A vitrine e o carrinho usam a mesma regra de promoção do servidor.
+function precoAtualProduto(produto) {
+  const normal = Number(produto.price);
+  const promocao = Number(produto.salePrice);
+  const preco = promocao > 0 && promocao < normal ? promocao : normal;
+  return Number.isFinite(preco) && preco > 0 ? Math.round(preco * 100) / 100 : 0;
+}
+
+async function consultarLoja(url, options = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
+  try {
+    const resposta = await fetch(url, { ...options, signal: controller.signal });
+    const dados = await resposta.json().catch(() => null);
+    if (!resposta.ok) {
+      const mensagem = typeof dados?.erro === 'string' ? dados.erro :
+        'A loja está temporariamente indisponível. Tente novamente em instantes.';
+      throw Object.assign(new Error(mensagem), { status: resposta.status });
+    }
+    if (dados === null) throw new Error('Não foi possível consultar a loja. Tente novamente.');
+    return dados;
+  } catch (erro) {
+    if (erro.name === 'AbortError') {
+      throw new Error('A loja demorou para responder. Tente novamente em instantes.');
+    }
+    if (erro instanceof TypeError) {
+      throw new Error('Não foi possível conectar à loja. Confira sua conexão e tente novamente.');
+    }
+    throw erro;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function atualizarPrecosCarrinho() {
+  if (!obterCarrinho().length) return { carrinho: [], precosAlterados: false };
+  const catalogo = await consultarLoja(STORE_API_URL, { cache: 'no-store' });
+  if (!Array.isArray(catalogo)) throw new Error('Não foi possível atualizar os produtos. Tente novamente.');
+  let precosAlterados = false;
+  // Leia novamente depois da consulta para preservar alterações feitas no carrinho.
+  const carrinho = obterCarrinho().map(item => {
+    const candidatos = catalogo.filter(produto => produto.active !== false &&
+      (item.id !== undefined ? String(produto.id) === String(item.id) : produto.name === item.name));
+    if (candidatos.length !== 1) {
+      throw new Error('Um produto não está mais disponível. Volte ao carrinho e remova esse item antes de pagar.');
+    }
+    const produto = candidatos[0];
+    const preco = precoAtualProduto(produto);
+    if (preco <= 0) throw new Error('Um produto está com o preço indisponível. Entre em contato com a loja.');
+    if (!Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1 || Number(item.quantity) > 99) {
+      throw new Error('Confira as quantidades no carrinho. São permitidas de 1 a 99 unidades por produto.');
+    }
+    if (!Number.isFinite(Number(item.price)) || Math.round(Number(item.price) * 100) !== Math.round(preco * 100)) {
+      precosAlterados = true;
+    }
+    return { ...item, id: produto.id, name: produto.name, image: produto.image || '', price: preco };
+  });
+  salvarCarrinho(carrinho);
+  return { carrinho, precosAlterados };
+}
+
 
 // ==========================================
 // FUNÇÕES AUXILIARES
@@ -32,9 +93,10 @@ function obterCarrinho() {
 
   try {
 
-    return JSON.parse(
+    const carrinho = JSON.parse(
       localStorage.getItem(CART_STORAGE_KEY)
-    ) || [];
+    );
+    return Array.isArray(carrinho) ? carrinho.filter(item => item && typeof item === 'object') : [];
 
   } catch (erro) {
 
@@ -115,6 +177,10 @@ function adicionarAoCarrinho(produto, quantidade = 1) {
 
   if (produtoExistente) {
 
+    produtoExistente.price = precoAtualProduto(produto);
+    produtoExistente.name = produto.name || 'Produto';
+    produtoExistente.image = produto.image || '';
+
     produtoExistente.quantity =
       Number(produtoExistente.quantity || 1) +
       quantidadeAdicionar;
@@ -124,7 +190,7 @@ function adicionarAoCarrinho(produto, quantidade = 1) {
     carrinho.push({
       id: produto.id,
       name: produto.name || 'Produto',
-      price: Number(produto.price) || 0,
+      price: precoAtualProduto(produto),
       image: produto.image || '',
       quantity: quantidadeAdicionar
     });
@@ -192,7 +258,7 @@ function renderizarProdutosLoja(lista = produtosLoja) {
       produto.image || 'img/sem-imagem.png';
 
     const precoProduto =
-      Number(produto.price) || 0;
+      precoAtualProduto(produto);
 
     card.dataset.search = `
       ${nomeProduto}
@@ -742,7 +808,7 @@ async function carregarProdutoIndividual() {
 
   dynamicProductPrice.textContent =
     formatarPreco(
-      produto.price
+      precoAtualProduto(produto)
     );
 
   dynamicProductImage.src =
@@ -1725,106 +1791,105 @@ function renderizarResumoPagamento() {
 // ABRIR CHECKOUT PRO
 // ==========================================
 
+const checkoutStatus = document.getElementById('checkoutStatus');
+let pagamentoEmAndamento = false;
+
+function mostrarStatusCompra(mensagem, tipo = 'info') {
+  if (!checkoutStatus) return;
+  checkoutStatus.textContent = mensagem;
+  checkoutStatus.dataset.type = tipo;
+  checkoutStatus.hidden = !mensagem;
+}
+
+function atualizarResumosCompra() {
+  renderizarCarrinho();
+  renderizarResumoCheckout();
+  renderizarResumoPagamento();
+}
+
+function definirPagamentoEmAndamento(ativo, texto = 'Ir para pagamento seguro') {
+  pagamentoEmAndamento = ativo;
+  if (!payButton) return;
+  payButton.disabled = ativo || !obterCarrinho().length;
+  payButton.textContent = texto;
+  payButton.setAttribute('aria-busy', String(ativo));
+}
+
+async function prepararResumoCompra() {
+  if (!cartItems && !checkoutItems && !paymentItems) return;
+  if (!obterCarrinho().length) return;
+  definirPagamentoEmAndamento(true, 'Conferindo valores...');
+  mostrarStatusCompra('Conferindo os preços atuais dos produtos...');
+  try {
+    const resultado = await atualizarPrecosCarrinho();
+    atualizarResumosCompra();
+    mostrarStatusCompra(resultado.precosAlterados ?
+      'Os preços foram atualizados. Confira o novo total antes de continuar.' : '');
+  } catch (erro) {
+    mostrarStatusCompra(erro.message, 'error');
+  } finally {
+    definirPagamentoEmAndamento(false);
+  }
+}
+
 if (payButton) {
-
-  payButton.addEventListener(
-    'click',
-    async function() {
-
-      const carrinho =
-        obterCarrinho();
-
-      if (carrinho.length === 0) {
-
-        alert(
-          'Seu carrinho está vazio.'
-        );
-
+  payButton.addEventListener('click', async function() {
+    if (pagamentoEmAndamento) return;
+    if (!obterCarrinho().length) {
+      mostrarStatusCompra('Seu carrinho está vazio.', 'error');
+      payButton.disabled = true;
+      return;
+    }
+    definirPagamentoEmAndamento(true, 'Abrindo pagamento...');
+    mostrarStatusCompra('');
+    let redirecionando = false;
+    try {
+      const resultado = await atualizarPrecosCarrinho();
+      atualizarResumosCompra();
+      definirPagamentoEmAndamento(true, 'Abrindo pagamento...');
+      if (resultado.precosAlterados) {
+        mostrarStatusCompra('Os preços foram atualizados. Confira o novo total e clique novamente para continuar.');
         return;
       }
-
-      const textoOriginal =
-        payButton.textContent;
-
-      try {
-
-        payButton.disabled = true;
-
-        payButton.textContent =
-          'Abrindo pagamento...';
-
-        const items =
-          carrinho.map(item => ({
-            name:
-              String(item.name || 'Produto'),
-
-            quantity:
-              Number(item.quantity) || 1,
-
-            price:
-              Number(item.price) || 0
-          }));
-
-        const resposta =
-          await fetch(
-            'https://navoryx-backend-2.onrender.com/criar-preferencia',
-            {
-              method: 'POST',
-
-              headers: {
-                'Content-Type':
-                  'application/json'
-              },
-
-              body:
-                JSON.stringify({
-                  items
-                })
-            }
-          );
-
-        const dados =
-          await resposta.json();
-
-        if (!resposta.ok) {
-
-          throw new Error(
-            dados.erro ||
-            'Não foi possível iniciar o pagamento.'
-          );
-        }
-
-        const linkPagamento =
-          dados.init_point;
-
-        if (!linkPagamento) {
-
-          throw new Error(
-            'O Mercado Pago não retornou o link de pagamento.'
-          );
-        }
-
-        window.location.href =
-          linkPagamento;
-
-      } catch (erro) {
-
-        console.error(
-          'Erro ao abrir Mercado Pago:',
-          erro
-        );
-
-        alert(
-          'Não foi possível abrir o pagamento. Verifique a conexão com o Mercado Pago.'
-        );
-
-        payButton.disabled = false;
-
-        payButton.textContent =
-          textoOriginal;
+      if (!resultado.carrinho.length) {
+        mostrarStatusCompra('Seu carrinho está vazio.', 'error');
+        return;
       }
+      const items = resultado.carrinho.map(item => ({
+        id: item.id,
+        name: String(item.name || 'Produto'),
+        quantity: Number(item.quantity),
+        price: Number(item.price)
+      }));
+      const dados = await consultarLoja('https://navoryx-backend-2.onrender.com/criar-preferencia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items })
+      });
+      let linkPagamento;
+      try { linkPagamento = new URL(dados.init_point); } catch (_) { /* Validado abaixo. */ }
+      if (!linkPagamento || linkPagamento.origin !== 'https://www.mercadopago.com.br') {
+        throw new Error('Não foi possível obter o link seguro do Mercado Pago. Tente novamente.');
+      }
+      window.location.href = linkPagamento.href;
+      redirecionando = true;
+    } catch (erro) {
+      let mensagem = erro.message;
+      // O catálogo pode mudar entre a conferência e a criação do pagamento.
+      if (erro.status === 409) {
+        try {
+          const atualizacao = await atualizarPrecosCarrinho();
+          atualizarResumosCompra();
+          if (atualizacao.precosAlterados) {
+            mensagem = 'Os preços foram atualizados. Confira o novo total e clique novamente para continuar.';
+          }
+        } catch (_) { /* Preserve a mensagem original se a nova consulta falhar. */ }
+      }
+      mostrarStatusCompra(mensagem, 'error');
+    } finally {
+      if (!redirecionando) definirPagamentoEmAndamento(false);
     }
-  );
+  });
 }
 
 
@@ -1838,3 +1903,6 @@ renderizarResumoPagamento();
 atualizarContadorCarrinho();
 
 renderizarCarrinho();
+
+// Atualiza também carrinhos salvos antes da correção dos preços promocionais.
+prepararResumoCompra();

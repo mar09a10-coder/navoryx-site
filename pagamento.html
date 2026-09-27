@@ -9,6 +9,7 @@
 
   <link rel="icon" type="image/png" href="img/favicon.png">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="checkout-status.css?v=20260927-1">
 </head>
 
 <body>
@@ -85,14 +86,18 @@
 
             </div>
 
+            <p id="checkoutStatus" class="checkout-status" role="status" aria-live="polite" hidden></p>
+
             <button
               type="button"
               class="checkout-confirm-button"
-              id="payButton">
+              id="payButton" disabled>
 
               Ir para pagamento seguro
 
             </button>
+
+            <a href="carrinho.html" class="payment-cart-link">Voltar ao carrinho</a>
 
             <p class="payment-security-note">
               🔒 O pagamento será concluído no ambiente seguro do Mercado Pago.
@@ -178,8 +183,9 @@
   </footer>
 
 
-  <script src="script.js"></script>
+  <script src="script.js?v=20260927-pagamento-1"></script>
 
 </body>
 
 </html>
+
