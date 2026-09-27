@@ -11,6 +11,11 @@
 #mlPanel .admin-actions{margin:10px 0}
 #mlPanel .admin-message,#mlPanel .ml-errors{overflow-wrap:anywhere}
 .ml-errors{color:#fca5a5;padding-left:24px}
+.ml-assistant{padding:18px;border:1px solid #2563eb;border-radius:12px;background:#0b1930;margin:20px 0}
+.ml-assistant p{margin:10px 0}
+#mlPanel .ml-needs-input input,#mlPanel .ml-needs-input select,#mlPanel .ml-needs-input textarea{border-color:#fbbf24;box-shadow:0 0 0 1px #fbbf2433}
+.ml-field-source{display:block;color:#86efac;font-size:12px;margin-top:5px}
+#mlProgress{color:#e2e8f0;font-weight:600}
 .ml-photo{display:flex;align-items:center;gap:18px}
 .ml-photo img{width:92px;height:92px;object-fit:contain;background:#fff;border-radius:10px}
 .ml-review-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:18px 0}

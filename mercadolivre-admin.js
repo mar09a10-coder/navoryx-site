@@ -1,10 +1,12 @@
-/* global API_BASE, token, authHeaders, logout, formatarPreco */
+/* global API_BASE, token, authHeaders, logout, formatarPreco, NavoryxMLAssist */
 (() => {
   'use strict';
   const el = id => document.getElementById(id);
   const prefix = '/admin/mercadolivre/publicacoes';
   const conditionNames = { new: 'Novo', used: 'Usado', not_specified: 'Não especificado' };
+  const assist = NavoryxMLAssist;
   let catalog = [], history = [], model = null, meta = null, draft = null;
+  let accountId = '', savedFields = null, predictions = [], predictionQuery = '';
   let generation = 0, categoryGeneration = 0, busy = false;
 
   function node(tag, text, className) {
@@ -19,7 +21,102 @@
     el('mlErrors').replaceChildren(...details.map(d => node('li', d)));
     el('mlErrors').hidden = !details.length;
   }
-  function failure(error) { message(error.message, true, error.details || []); }
+  function failure(error) {
+    message(error.message, true, error.details || []);
+    if (!meta) return;
+    for (const detail of error.details || []) {
+      if (!/required|obrigat|missing/i.test(detail)) continue;
+      for (const group of ['attributes', 'sale_terms']) for (const a of meta[group]) {
+        if (!detail.includes(a.id)) continue;
+        const input = el(`${group}-${a.id}`); if (!input) continue;
+        input.required = true;
+        const wrapper = input.closest('.admin-field');
+        const label = wrapper.querySelector('label');
+        if (!label.textContent.endsWith(' *')) label.textContent += ' *';
+        el(group === 'attributes' ? 'mlAttributes' : 'mlSaleTerms').append(wrapper);
+      }
+    }
+    progress();
+  }
+  function product() { return catalog.find(p => String(p.id) === el('mlProduct').value); }
+  function storageKey(p) { return `navoryxMLFicha:v1:${accountId}:${p.id}`; }
+  function readSaved(p) {
+    try {
+      const data = JSON.parse(localStorage.getItem(storageKey(p)) || 'null');
+      return data?.signature === assist.signature(p) && /^MLB\d+$/.test(data.category_id) ? data : null;
+    } catch (_) { return null; }
+  }
+  function remember() {
+    const p = product(); if (!p || !meta || busy) return;
+    const fields = {};
+    el('mlForm').querySelectorAll('[data-attribute-id]').forEach(input => {
+      fields[input.id] = { value: input.value, source: input.dataset.source || '', kind: input.tagName };
+    });
+    const data = { signature: assist.signature(p), category_id: meta.category.id, fields,
+      title: el('mlTitle').value, description: el('mlDescription').value,
+      price: el('mlPrice').value, quantity: el('mlQuantity').value,
+      catalog_price: JSON.stringify([p.price, p.salePrice]),
+      condition: el('mlCondition').value, listing: el('mlListingType').value, free_shipping: el('mlFreeShipping').value };
+    try {
+      localStorage.setItem(storageKey(p), JSON.stringify(data));
+      savedFields = data;
+      el('mlRememberNote').textContent = 'Preenchimento salvo neste navegador para este produto.';
+    } catch (_) { el('mlRememberNote').textContent = 'Este navegador não permitiu salvar o preenchimento. Você pode continuar normalmente.'; }
+  }
+  function sourceNote(input, text = '') {
+    input.dataset.source = text;
+    const note = el(input.id + '-source');
+    if (note) { note.textContent = text; note.hidden = !text; }
+  }
+  function applySuggestion(input, value, source) {
+    if (!input || input.value.trim()) return false;
+    const content = input.tagName === 'SELECT' ? value.value_id : value.value_name;
+    if (!content || (input.tagName === 'SELECT' && ![...input.options].some(o => o.value === content))) return false;
+    input.value = content; sourceNote(input, source); return true;
+  }
+  function autofill() {
+    const p = product(); if (!p || !meta) return;
+    const predicted = predictionQuery === el('mlTitle').value.trim() ? predictions.find(c => c.id === meta.category.id)?.attributes || [] : [];
+    const data = assist.suggestions({ ...p, name: el('mlTitle').value, description: el('mlDescription').value }, meta, predicted);
+    let count = 0;
+    for (const group of ['attributes', 'sale_terms']) for (const value of data[group]) {
+      if (applySuggestion(el(`${group}-${value.id}`), value, value.source)) count++;
+    }
+    el('mlConflicts').replaceChildren(...data.conflicts.map(c => node('li', c.message)));
+    el('mlConflicts').hidden = !data.conflicts.length;
+    el('mlAutofillNote').textContent = count ? `${count} campo(s) preenchido(s) com dados da descrição e sugestões disponíveis. Confira os valores indicados em verde.` :
+      'Aproveitamos os dados que foi possível identificar. Os campos sem informação confiável continuam disponíveis para você completar.';
+    progress();
+  }
+  function restoreSaved() {
+    if (!savedFields || savedFields.category_id !== meta.category.id) return;
+    for (const [id, data] of Object.entries(savedFields.fields || {})) {
+      const input = el(id); if (!input || !input.dataset.attributeId || typeof data.value !== 'string') continue;
+      if (data.kind && data.kind !== input.tagName) continue;
+      if (input.tagName === 'SELECT' && ![...input.options].some(o => o.value === data.value)) continue;
+      if (input.tagName !== 'SELECT' && data.value.length > (input.maxLength || 255)) continue;
+      input.value = data.value;
+      sourceNote(input, data.value ? (data.source || 'Preenchimento anterior — confira') : '');
+    }
+    for (const [id, value] of [['mlCondition', savedFields.condition], ['mlListingType', savedFields.listing], ['mlFreeShipping', savedFields.free_shipping]]) {
+      if ([...el(id).options].some(o => o.value === value)) el(id).value = value;
+    }
+    el('mlRememberNote').textContent = 'Recuperamos o preenchimento anterior deste produto. Confira antes de publicar.';
+    progress();
+  }
+  function pendingFields() {
+    if (!meta) return [];
+    return [...el('mlFields').querySelectorAll('input,select,textarea')].filter(input =>
+      (input.required || input.hasAttribute('required')) && (!input.value.trim() || input.validity?.valid === false));
+  }
+  function progress() {
+    if (!meta) return;
+    const pending = pendingFields();
+    el('mlFields').querySelectorAll('.ml-needs-input').forEach(wrapper => wrapper.classList.remove('ml-needs-input'));
+    pending.forEach(input => input.closest('.admin-field')?.classList.add('ml-needs-input'));
+    el('mlProgress').textContent = pending.length ? `Faltam ${pending.length} campo(s) obrigatório(s). Eles estão destacados em amarelo.` : 'Campos obrigatórios preenchidos. Você já pode validar e revisar.';
+    el('mlMissing').hidden = !pending.length;
+  }
   function invalidate() {
     draft = null;
     el('mlReview').hidden = true;
@@ -68,27 +165,42 @@
         (url.hostname === 'mercadolivre.com.br' || url.hostname.endsWith('.mercadolivre.com.br')) ? url.href : '';
     } catch (_) { return ''; }
   }
-  function selectProduct() {
+  function selectProduct(automatic = false) {
     invalidate(); meta = null; categoryGeneration++;
+    predictions = []; predictionQuery = ''; savedFields = null;
     el('mlCategoryFields').hidden = true;
     options(el('mlCategory'), [], 'Busque e selecione uma categoria');
     el('mlCategoryCode').value = '';
     const p = catalog.find(p => String(p.id) === el('mlProduct').value);
     el('mlFields').disabled = !p;
     if (!p) return;
+    savedFields = readSaved(p);
     el('mlTitle').maxLength = 200;
     el('mlTitle').value = p.name || '';
     el('mlPrice').value = Number(p.salePrice) > 0 ? p.salePrice : p.price;
-    el('mlQuantity').value = '';
+    el('mlQuantity').value = Number(p.stock) > 0 ? '1' : '';
     el('mlQuantity').max = Math.max(0, Number(p.stock) || 0);
     el('mlStock').textContent = 'Estoque cadastrado: ' + (Number(p.stock) || 0) + '. Informe quantas unidades vai reservar para o Mercado Livre.';
     el('mlDescription').value = p.description || '';
+    if (savedFields) {
+      if (typeof savedFields.title === 'string' && savedFields.title.length <= 200) el('mlTitle').value = savedFields.title;
+      if (typeof savedFields.description === 'string' && savedFields.description.length <= 10000) el('mlDescription').value = savedFields.description;
+      if (savedFields.catalog_price === JSON.stringify([p.price, p.salePrice]) && Number(savedFields.price) > 0) el('mlPrice').value = savedFields.price;
+      if (Number.isSafeInteger(Number(savedFields.quantity)) && Number(savedFields.quantity) > 0 && Number(savedFields.quantity) <= Number(p.stock)) el('mlQuantity').value = savedFields.quantity;
+    }
     const image = safeImage(p.image);
     el('mlPhoto').hidden = !image;
     if (image) el('mlPhoto').src = image;
     else el('mlPhoto').removeAttribute('src');
     el('mlFreeShipping').value = '';
+    el('mlRememberNote').textContent = 'O preenchimento deste produto será lembrado neste navegador.';
     message('Confira o nome e busque a categoria correspondente.');
+    if (automatic && savedFields) {
+      options(el('mlCategory'), [{ id: savedFields.category_id, name: 'Categoria usada anteriormente' }]);
+      el('mlCategory').value = savedFields.category_id;
+      el('mlCategoryHint').textContent = 'Categoria recuperada do preenchimento anterior. Você pode buscar outra, se necessário.';
+      categoryChanged(savedFields.category_id);
+    } else if (automatic) searchCategories(true);
   }
   function fillProducts() {
     const locked = new Set(history.filter(h => !['draft', 'failed'].includes(h.state)).map(h => h.product_id));
@@ -114,6 +226,7 @@
       if (version !== generation || !token()) return;
       const [account, products] = results.map(r => r.value);
       catalog = products; history = account.publications; model = account.model;
+      accountId = String(account.seller.id);
       el('mlAccount').textContent = `Conta conectada: ${account.seller.nickname} · ${account.seller.id}`;
       el('mlTitleLabel').textContent = model === 'user_products' ? 'Nome do produto no Mercado Livre *' : 'Título do anúncio *';
       el('mlTitleHint').textContent = model === 'user_products' ?
@@ -144,7 +257,9 @@
       if (attribute.value_type === 'number_unit') input.placeholder = 'Valor e unidade';
     }
     wrapper.append(label, input);
-    if (attribute.tooltip || attribute.hint) wrapper.append(node('small', attribute.tooltip || attribute.hint, 'admin-preview-note'));
+    const hint = assist.dica(attribute);
+    if (hint) { const help = node('small', hint, 'admin-preview-note'); help.id = id + '-help'; input.setAttribute('aria-describedby', help.id); wrapper.append(help); }
+    const source = node('small', '', 'ml-field-source'); source.id = id + '-source'; source.hidden = true; wrapper.append(source);
     return wrapper;
   }
   async function categoryChanged(id) {
@@ -159,22 +274,35 @@
       meta = data;
       el('mlCategoryName').textContent = data.category.path_from_root?.map(c => c.name).join(' › ') || data.category.name;
       el('mlTitle').maxLength = Math.min(Number(data.category.settings?.max_title_length) || 60, 200);
+      const adjusted = assist.title(el('mlTitle').value, el('mlTitle').maxLength);
+      if (adjusted !== el('mlTitle').value) {
+        el('mlTitle').value = adjusted;
+        // The prediction still belongs to this product after shortening its title.
+        if (predictionQuery) predictionQuery = adjusted;
+        el('mlTitleHint').textContent = 'Nome encurtado para caber no limite do Mercado Livre. Confira se marca e modelo continuam corretos.';
+      }
+      const chosen = [...el('mlCategory').options].find(o => o.value === data.category.id);
+      if (chosen) chosen.textContent = data.category.name;
       options(el('mlCondition'), data.conditions.map(id => ({ id, name: conditionNames[id] })));
       options(el('mlListingType'), data.listing_types);
-      ['mlAttributes', 'mlOptionalAttributes', 'mlSaleTerms'].forEach(id => el(id).replaceChildren());
+      if (data.conditions.length === 1) el('mlCondition').value = data.conditions[0];
+      if (data.listing_types.length === 1) el('mlListingType').value = data.listing_types[0].id;
+      ['mlAttributes', 'mlOptionalAttributes', 'mlSaleTerms', 'mlOptionalSaleTerms'].forEach(id => el(id).replaceChildren());
       for (const a of data.attributes) {
-        const important = a.tags?.required || ['BRAND', 'MODEL', 'GTIN', 'EMPTY_GTIN_REASON'].includes(a.id);
+        const important = a.tags?.required;
         el(important ? 'mlAttributes' : 'mlOptionalAttributes').append(attributeField(a, 'attributes'));
       }
-      data.sale_terms.forEach(a => el('mlSaleTerms').append(attributeField(a, 'sale_terms')));
-      if (!data.sale_terms.length) el('mlSaleTerms').append(node('p', 'Nenhuma condição adicional retornada para esta categoria.', 'admin-preview-note'));
+      data.sale_terms.forEach(a => el(a.tags?.required ? 'mlSaleTerms' : 'mlOptionalSaleTerms').append(attributeField(a, 'sale_terms')));
+      if (!el('mlSaleTerms').childElementCount) el('mlSaleTerms').append(node('p', 'Nenhuma condição adicional obrigatória informada para esta categoria.', 'admin-preview-note'));
       el('mlOptionalDetails').hidden = !el('mlOptionalAttributes').childElementCount;
+      el('mlOptionalSaleDetails').hidden = !el('mlOptionalSaleTerms').childElementCount;
       el('mlCategoryFields').hidden = false;
       el('mlReviewButton').disabled = !data.me2 || !data.listing_types.length;
+      autofill(); restoreSaved();
       message(!data.me2 ? 'Mercado Envios indisponível para esta conta ou categoria. Conclua este produto diretamente no Mercado Livre.' :
         !data.listing_types.length ? 'Não há um tipo de anúncio disponível para esta categoria.' : 'Preencha os dados da categoria e valide o anúncio.', !data.me2 || !data.listing_types.length);
     } catch (error) { if (version === categoryGeneration) failure(error); }
-    finally { if (version === categoryGeneration) setBusy(false); }
+    finally { if (version === categoryGeneration) { setBusy(false); remember(); } }
   }
   function values(group, schema) {
     return [...el('mlForm').querySelectorAll(`[data-group="${group}"]`)].flatMap(input => {
@@ -264,9 +392,14 @@
     finally { if (version === generation) { setBusy(false); button.disabled = false; } }
   }
 
-  el('mlProduct').addEventListener('change', selectProduct);
-  el('mlForm').addEventListener('input', invalidate);
-  el('mlForm').addEventListener('change', invalidate);
+  el('mlProduct').addEventListener('change', () => selectProduct(true));
+  function changed(event) {
+    invalidate();
+    if (event.target.dataset?.attributeId) sourceNote(event.target, '');
+    progress(); remember();
+  }
+  el('mlForm').addEventListener('input', changed);
+  el('mlForm').addEventListener('change', changed);
   el('mlCategory').addEventListener('change', () => categoryChanged(el('mlCategory').value));
   el('mlUseCategory').addEventListener('click', () => {
     if (busy) return;
@@ -274,19 +407,34 @@
     if (!/^MLB\d+$/.test(value)) return message('Informe um código de categoria como MLB1234.', true);
     options(el('mlCategory'), [{ id: value, name: value }]); el('mlCategory').value = value; categoryChanged(value);
   });
-  el('mlSearch').addEventListener('click', async () => {
+  async function searchCategories(chooseFirst = false) {
     if (busy) return;
     const title = el('mlTitle').value.trim();
     if (!title) return message('Preencha o nome do produto para buscar categorias.', true);
+    const selectedProduct = el('mlProduct').value;
     const version = generation; setBusy(true); invalidate(); meta = null; el('mlCategoryFields').hidden = true;
     message('Buscando categorias…');
     try {
       const categories = await call('/categorias?' + new URLSearchParams({ q: title }));
-      if (version !== generation) return;
+      if (version !== generation || selectedProduct !== el('mlProduct').value) return;
+      predictions = categories; predictionQuery = title;
       options(el('mlCategory'), categories, 'Selecione a categoria correta');
       message(categories.length ? 'Escolha a categoria que corresponde ao produto.' : 'Não houve sugestões. Ajuste o nome ou informe o código da categoria.');
+      el('mlCategoryHint').textContent = 'Confira a categoria sugerida. Você pode selecionar outra opção abaixo.';
+      if (chooseFirst && categories.length) {
+        el('mlCategory').value = categories[0].id;
+        await categoryChanged(categories[0].id);
+      }
     } catch (error) { if (version === generation) failure(error); }
-    finally { if (version === generation) setBusy(false); }
+    finally { if (version === generation && selectedProduct === el('mlProduct').value) setBusy(false); }
+  }
+  el('mlSearch').addEventListener('click', () => searchCategories(false));
+  el('mlAutofill').addEventListener('click', () => { if (!busy) { invalidate(); autofill(); remember(); } });
+  el('mlMissing').addEventListener('click', () => {
+    const input = pendingFields()[0];
+    if (!input) return;
+    const details = input.closest('details'); if (details) details.open = true;
+    input.scrollIntoView({ behavior: 'smooth', block: 'center' }); input.focus({ preventScroll: true });
   });
   el('mlForm').addEventListener('submit', async event => {
     event.preventDefault(); if (busy || !meta) return;
@@ -326,6 +474,7 @@
   document.addEventListener('navoryx:login', () => { if (!el('mlPanel').hidden) load(); });
   document.addEventListener('navoryx:logout', () => {
     generation++; categoryGeneration++; setBusy(false); invalidate(); meta = null; catalog = []; history = [];
+    accountId = ''; savedFields = null; predictions = []; predictionQuery = '';
     el('mlForm').hidden = true; el('mlHistory').replaceChildren(); el('mlAccount').textContent = 'Entre novamente para consultar a conta.';
   });
 })();

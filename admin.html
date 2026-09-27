@@ -6,7 +6,7 @@
   <title>Painel Administrativo | Navoryx</title>
   <link rel="icon" type="image/png" href="img/favicon.png">
   <link rel="stylesheet" href="style.css?v=20260927-cards">
-  <link rel="stylesheet" href="mercadolivre-admin.css?v=20260927-publicacao1">
+  <link rel="stylesheet" href="mercadolivre-admin.css?v=20260927-preenchimento2">
   <style>
     .admin-login{max-width:430px;margin:70px auto;}.admin-login[hidden],.admin-app[hidden]{display:none}
     .admin-message{min-height:24px;margin:12px 0;color:#7dd3fc}.admin-message.error{color:#fca5a5}
@@ -125,7 +125,7 @@
           <div class="admin-card">
             <div class="admin-toolbar"><div><span class="eyebrow">MERCADO LIVRE</span><h2>Publicar um produto</h2></div><button id="mlRefresh" type="button" class="admin-secondary">Atualizar conta e histórico</button></div>
             <p id="mlAccount">Abra esta aba para consultar sua conta.</p>
-            <p class="admin-preview-note">Escolha um produto, complete os dados da categoria e revise antes de publicar. Cada cadastro corresponde a um anúncio sem variações, com Mercado Envios.</p>
+            <p class="admin-preview-note">Escolha um produto para buscar a categoria e preencher os dados disponíveis. Confira as sugestões e complete os campos destacados antes de revisar.</p>
             <p id="mlMessage" class="admin-message" role="status" aria-live="polite"></p>
             <ul id="mlErrors" class="ml-errors" hidden></ul>
             <form id="mlForm" hidden>
@@ -137,21 +137,30 @@
                   <div class="admin-field"><label for="mlQuantity">Unidades para anunciar *</label><input id="mlQuantity" type="number" min="1" step="1" required><small id="mlStock" class="admin-preview-note"></small></div>
                   <div class="admin-field admin-field-full"><label for="mlDescription">Descrição no Mercado Livre *</label><textarea id="mlDescription" rows="6" maxlength="10000" required></textarea><small class="admin-preview-note">Use texto simples. Estes ajustes não alteram o cadastro da loja.</small></div>
                   <div class="admin-field admin-field-full ml-photo"><img id="mlPhoto" alt="Foto cadastrada do produto" hidden><p>Será enviada a foto do cadastro da Navoryx.</p></div>
-                  <div class="admin-field admin-field-full"><label for="mlCategory">Categoria do Mercado Livre *</label><div class="admin-actions"><button id="mlSearch" type="button" class="admin-secondary">Buscar categorias pelo nome</button></div><select id="mlCategory" required><option value="">Busque e selecione uma categoria</option></select></div>
+                  <div class="admin-field admin-field-full"><label for="mlCategory">Categoria do Mercado Livre *</label><select id="mlCategory" required><option value="">Busque e selecione uma categoria</option></select><small id="mlCategoryHint" class="admin-preview-note">A categoria será sugerida pelo nome do produto. Confira se ela corresponde ao que você vende.</small><div class="admin-actions"><button id="mlSearch" type="button" class="admin-secondary">Buscar outras categorias</button></div></div>
                   <details class="admin-field-full"><summary>Já tenho o código da categoria</summary><div class="admin-actions"><div class="admin-field"><label for="mlCategoryCode">Código da categoria</label><input id="mlCategoryCode" placeholder="MLB1234" maxlength="20"></div><button id="mlUseCategory" type="button" class="admin-secondary">Usar categoria</button></div></details>
                 </div>
                 <div id="mlCategoryFields" hidden>
                   <h3 class="admin-subheading" id="mlCategoryName"></h3>
+                  <div class="ml-assistant">
+                    <strong>Preenchimento assistido</strong>
+                    <p id="mlAutofillNote" class="admin-preview-note"></p>
+                    <p id="mlProgress" aria-live="polite"></p>
+                    <ul id="mlConflicts" class="ml-errors" hidden></ul>
+                    <div class="admin-actions"><button id="mlAutofill" type="button" class="admin-secondary">Completar campos vazios</button><button id="mlMissing" type="button" class="admin-secondary">Ir para o próximo campo pendente</button></div>
+                    <small id="mlRememberNote" class="admin-preview-note">O preenchimento deste produto será lembrado neste navegador.</small>
+                  </div>
                   <div class="admin-form-grid">
                     <div class="admin-field"><label for="mlCondition">Condição *</label><select id="mlCondition" required></select></div>
                     <div class="admin-field"><label for="mlListingType">Tipo de anúncio *</label><select id="mlListingType" required></select></div>
                     <div class="admin-field admin-field-full"><label for="mlFreeShipping">Frete pelo Mercado Envios *</label><select id="mlFreeShipping" required><option value="">Selecione</option><option value="false">Sem oferecer frete grátis adicional</option><option value="true">Oferecer frete grátis ao comprador</option></select><small class="admin-preview-note">O Mercado Livre pode exigir frete grátis conforme o produto e o preço. Custos de envio ficam sujeitos às condições da sua conta.</small></div>
                   </div>
                   <h3 class="admin-subheading">Características do produto</h3>
-                  <p class="admin-preview-note">Preencha os campos com * e informe apenas dados reais do produto. Medidas devem incluir a unidade, como 15 cm.</p>
+                  <p class="admin-preview-note">Os campos com * são obrigatórios. Os demais ficam em Mais características. Confira os valores preenchidos automaticamente.</p>
                   <div id="mlAttributes" class="admin-form-grid"></div>
                   <details id="mlOptionalDetails"><summary>Mais características (opcionais)</summary><div id="mlOptionalAttributes" class="admin-form-grid"></div></details>
                   <h3 class="admin-subheading">Condições de venda</h3><div id="mlSaleTerms" class="admin-form-grid"></div>
+                  <details id="mlOptionalSaleDetails"><summary>Mais condições de venda (opcionais)</summary><div id="mlOptionalSaleTerms" class="admin-form-grid"></div></details>
                   <p class="admin-preview-note">O estoque e o preço ainda são controlados separadamente na loja e no Mercado Livre. Reserve as unidades anunciadas para evitar vender o mesmo estoque duas vezes.</p>
                   <button id="mlReviewButton" type="submit" class="product-buy-button">Validar e revisar anúncio</button>
                 </div>
@@ -170,6 +179,7 @@
     </section>
   </main>
   <script src="admin.js?v=20260927-publicacao1"></script>
-  <script src="mercadolivre-admin.js?v=20260927-publicacao1"></script>
+  <script src="mercadolivre-preenchimento.js?v=20260927-preenchimento2"></script>
+  <script src="mercadolivre-admin.js?v=20260927-preenchimento2"></script>
 </body>
 </html>
