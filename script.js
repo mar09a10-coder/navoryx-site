@@ -544,6 +544,28 @@ if (
 }
 
 
+// As imagens de categoria também funcionam como atalhos da vitrine.
+const categoryCards = document.querySelectorAll('.category-image-card[data-category]');
+const categoryTerms = {
+  audio: /áudio|audio|fone|headset|caixa de som|bluetooth|earbud/i,
+  cabos: /cabo|carregador|carregamento|fonte|adaptador/i,
+  celular: /celular|smartphone|capinha|película|suporte|acessório/i,
+  smartwatch: /smartwatch|relógio|relogio|pulseira inteligente/i
+};
+
+categoryCards.forEach(card => {
+  card.addEventListener('click', () => {
+    const selected = card.dataset.category;
+    categoryCards.forEach(item => item.removeAttribute('aria-current'));
+    card.setAttribute('aria-current', 'true');
+    if (searchInput) searchInput.value = '';
+    const matches = produtosLoja.filter(produto =>
+      categoryTerms[selected]?.test(`${produto.category || ''} ${produto.name || ''}`)
+    );
+    renderizarProdutosLoja(matches);
+  });
+});
+
 // ==========================================
 // INICIAR PRODUTOS DA HOME
 // ==========================================
