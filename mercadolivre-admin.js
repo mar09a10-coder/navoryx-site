@@ -297,10 +297,10 @@
       el('mlOptionalDetails').hidden = !el('mlOptionalAttributes').childElementCount;
       el('mlOptionalSaleDetails').hidden = !el('mlOptionalSaleTerms').childElementCount;
       el('mlCategoryFields').hidden = false;
-      el('mlReviewButton').disabled = !data.me2 || !data.listing_types.length;
+      el('mlReviewButton').disabled = !data.listing_types.length;
       autofill(); restoreSaved();
-      message(!data.me2 ? 'Mercado Envios indisponível para esta conta ou categoria. Conclua este produto diretamente no Mercado Livre.' :
-        !data.listing_types.length ? 'Não há um tipo de anúncio disponível para esta categoria.' : 'Preencha os dados da categoria e valide o anúncio.', !data.me2 || !data.listing_types.length);
+      message(!data.listing_types.length ? 'Não há um tipo de anúncio disponível para esta categoria.' :
+        'Preencha os dados da categoria e valide o anúncio com o Mercado Livre.', !data.listing_types.length);
     } catch (error) { if (version === categoryGeneration) failure(error); }
     finally { if (version === categoryGeneration) { setBusy(false); remember(); } }
   }
