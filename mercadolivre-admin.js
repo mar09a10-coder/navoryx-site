@@ -30,6 +30,7 @@
         if (!detail.includes(a.id)) continue;
         const input = el(`${group}-${a.id}`); if (!input) continue;
         input.required = true;
+        input.dataset.providerRequired = 'true';
         const wrapper = input.closest('.admin-field');
         const label = wrapper.querySelector('label');
         if (!label.textContent.endsWith(' *')) label.textContent += ' *';
@@ -111,6 +112,23 @@
   }
   function progress() {
     if (!meta) return;
+    for (const [group, requiredId, optionalId] of [
+      ['attributes', 'mlAttributes', 'mlOptionalAttributes'],
+      ['sale_terms', 'mlSaleTerms', 'mlOptionalSaleTerms']
+    ]) for (const a of meta[group]) {
+      const input = el(`${group}-${a.id}`); if (!input) continue;
+      const required = a.tags?.required === true ||
+        (el('mlCondition').value === 'new' && a.tags?.new_required === true) ||
+        input.dataset.providerRequired === 'true';
+      input.required = required;
+      const wrapper = input.closest('.admin-field');
+      const label = wrapper.querySelector('label');
+      label.textContent = a.name + (required ? ' *' : '');
+      const target = el(required ? requiredId : optionalId);
+      if (wrapper.parentElement !== target) target.append(wrapper);
+    }
+    el('mlOptionalDetails').hidden = !el('mlOptionalAttributes').childElementCount;
+    el('mlOptionalSaleDetails').hidden = !el('mlOptionalSaleTerms').childElementCount;
     const pending = pendingFields();
     el('mlFields').querySelectorAll('.ml-needs-input').forEach(wrapper => wrapper.classList.remove('ml-needs-input'));
     pending.forEach(input => input.closest('.admin-field')?.classList.add('ml-needs-input'));
@@ -239,7 +257,8 @@
   function attributeField(attribute, group) {
     const wrapper = node('div', undefined, 'admin-field');
     const id = `${group}-${attribute.id}`;
-    const required = attribute.tags?.required === true;
+    const required = attribute.tags?.required === true ||
+      (el('mlCondition').value === 'new' && attribute.tags?.new_required === true);
     const label = node('label', attribute.name + (required ? ' *' : ''));
     label.htmlFor = id;
     const isList = ['list', 'boolean'].includes(attribute.value_type);
