@@ -39,7 +39,7 @@ async function abrirPagina({ cart = [item()], catalogo = [produto], request, pag
     window, URL, URLSearchParams, AbortController, TypeError, setTimeout, clearTimeout,
     console: { error() {}, warn() {} },
     document: { getElementById: id => nodes[id] || null, createElement: elemento,
-      addEventListener() {}, querySelector: () => null },
+      addEventListener() {}, querySelector: () => null, querySelectorAll: () => [] },
     localStorage: { getItem: key => memory.get(key) || null, setItem: (key, value) => memory.set(key, value) },
     alert: () => assert.fail('Os erros devem aparecer na página.'),
     fetch: async (url, options = {}) => {
@@ -48,6 +48,17 @@ async function abrirPagina({ cart = [item()], catalogo = [produto], request, pag
       if (state.request) {
         const custom = await state.request(call);
         if (custom) return custom;
+      }
+      if (call.path === '/criar-preferencia') {
+        for (const item of call.body.items) {
+          const match = state.catalogo.find(p => String(p.id) === String(item.id) && p.active !== false);
+          if (!match) return resposta({ erro: 'Um produto não está mais disponível.' }, 409);
+          if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 99)
+            return resposta({ erro: 'Quantidade inválida.' }, 400);
+          const atual = Number(match.salePrice) > 0 && Number(match.salePrice) < Number(match.price) ? Number(match.salePrice) : Number(match.price);
+          if (Math.round(item.price * 100) !== Math.round(atual * 100))
+            return resposta({ erro: 'O preço de um produto mudou.' }, 409);
+        }
       }
       return resposta(call.path === '/produtos' ? state.catalogo : { init_point: linkSeguro });
     }
@@ -72,7 +83,7 @@ test('promoções válidas e centavos seguem a regra do servidor', async () => {
   assert.equal(page.cart()[0].quantity, 2);
 });
 
-for (const [pagina, totalId] of [['pagamento', 'paymentTotal'], ['carrinho', 'cartTotal'], ['checkout', 'checkoutTotal']]) {
+for (const [pagina, totalId] of [['carrinho', 'cartTotal'], ['checkout', 'checkoutTotal']]) {
   test(`${pagina}: atualiza carrinho antigo e avisa sobre o novo total`, async () => {
     const page = await abrirPagina({ pagina, cart: [item(30)] });
     assert.equal(page.cart()[0].price, 26);
@@ -82,10 +93,18 @@ for (const [pagina, totalId] of [['pagamento', 'paymentTotal'], ['carrinho', 'ca
   });
 }
 
+test('pagamento abre imediatamente sem consultar o catálogo', async () => {
+  const page = await abrirPagina({ cart: [item(30)] });
+  assert.equal(page.requests.length, 0);
+  assert.equal(page.nodes.payButton.disabled, false);
+  assert.match(page.nodes.paymentTotal.textContent, /30,00/);
+});
+
 test('envia o identificador e preço conferido ao criar o checkout', async () => {
   const page = await abrirPagina();
   await page.nodes.payButton.click();
   assert.deepEqual(page.posts()[0].body.items, [{ id: 123, name: produto.name, quantity: 1, price: 26 }]);
+  assert.equal(page.requests.length, 1);
   assert.equal(page.window.location.href, linkSeguro);
   assert.equal(page.nodes.payButton.disabled, true);
 });
@@ -94,13 +113,13 @@ test('mudança de preço exige nova revisão antes de abrir o pagamento', async 
   const page = await abrirPagina();
   page.state.catalogo = [{ ...produto, salePrice: 28 }];
   await page.nodes.payButton.click();
-  assert.equal(page.posts().length, 0);
+  assert.equal(page.posts().length, 1);
   assert.equal(page.cart()[0].price, 28);
   assert.match(page.nodes.paymentTotal.textContent, /28,00/);
   assert.match(page.nodes.checkoutStatus.textContent, /clique novamente/);
   assert.equal(page.nodes.payButton.disabled, false);
   await page.nodes.payButton.click();
-  assert.equal(page.posts()[0].body.items[0].price, 28);
+  assert.equal(page.posts()[1].body.items[0].price, 28);
 });
 
 test('corrige conflito de preço ocorrido entre a consulta e o pagamento', async () => {
@@ -135,17 +154,17 @@ test('não cria checkout com produto removido ou quantidade inválida', async ()
   for (const options of [{ catalogo: [] }, { catalogo: [{ ...produto, active: false }] }, { cart: [{ ...item(), quantity: 1.5 }] }]) {
     const page = await abrirPagina(options);
     await page.nodes.payButton.click();
-    assert.equal(page.posts().length, 0);
+    assert.equal(page.posts().length, 1);
     assert.equal(page.nodes.checkoutStatus.dataset.type, 'error');
     assert.equal(page.window.location.href, 'pagamento.html');
   }
 });
 
-test('falha de rede preserva o carrinho e bloqueia criação sem conferir preços', async () => {
+test('falha de rede preserva o carrinho e permite tentar novamente', async () => {
   const page = await abrirPagina({ cart: [item(30)], request: async () => { throw new TypeError('Failed to fetch'); } });
   await page.nodes.payButton.click();
   assert.equal(page.cart()[0].price, 30);
-  assert.equal(page.posts().length, 0);
+  assert.equal(page.posts().length, 1);
   assert.match(page.nodes.checkoutStatus.textContent, /conexão/);
   assert.equal(page.nodes.payButton.disabled, false);
 });

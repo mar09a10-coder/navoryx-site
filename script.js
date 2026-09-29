@@ -1863,21 +1863,12 @@ if (payButton) {
       return;
     }
     definirPagamentoEmAndamento(true, 'Abrindo pagamento...');
-    mostrarStatusCompra('');
+    mostrarStatusCompra('Conectando ao pagamento seguro. Aguarde alguns instantes...');
     let redirecionando = false;
     try {
-      const resultado = await atualizarPrecosCarrinho();
-      atualizarResumosCompra();
-      definirPagamentoEmAndamento(true, 'Abrindo pagamento...');
-      if (resultado.precosAlterados) {
-        mostrarStatusCompra('Os preços foram atualizados. Confira o novo total e clique novamente para continuar.');
-        return;
-      }
-      if (!resultado.carrinho.length) {
-        mostrarStatusCompra('Seu carrinho está vazio.', 'error');
-        return;
-      }
-      const items = resultado.carrinho.map(item => ({
+      // O servidor confere preço e disponibilidade antes de criar a preferência.
+      // Evite uma consulta extra ao catálogo na abertura do pagamento.
+      const items = obterCarrinho().map(item => ({
         id: item.id,
         name: String(item.name || 'Produto'),
         quantity: Number(item.quantity),
@@ -1927,4 +1918,5 @@ atualizarContadorCarrinho();
 renderizarCarrinho();
 
 // Atualiza também carrinhos salvos antes da correção dos preços promocionais.
-prepararResumoCompra();
+// No pagamento, o servidor já valida o carrinho; a consulta só ocorre em caso de conflito.
+if (!paymentItems) prepararResumoCompra();
