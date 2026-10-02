@@ -8,7 +8,7 @@
   <title>Checkout | Navoryx</title>
 
   <link rel="icon" type="image/png" href="img/favicon.png">
-  <link rel="stylesheet" href="style.css?v=20261002-mobile-checkout">
+  <link rel="stylesheet" href="style.css?v=20261002-frete">
   <link rel="stylesheet" href="checkout-status.css?v=20260927-1">
 </head>
 
@@ -265,9 +265,17 @@
 
           <aside class="checkout-summary">
 
-            <h2>
-              Resumo do pedido
-            </h2>
+            <section class="shipping-card" aria-labelledby="shippingTitle">
+  <h2 id="shippingTitle">Como você quer receber?</h2>
+  <label for="shippingCep">CEP de entrega</label>
+  <div class="shipping-search">
+    <input id="shippingCep" type="text" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" aria-describedby="shippingStatus">
+    <button id="shippingCalculate" type="button">Calcular frete</button>
+  </div>
+  <p id="shippingStatus" class="checkout-status" role="status" aria-live="polite">Informe o CEP para consultar as opções.</p>
+  <fieldset id="shippingOptions"><legend class="sr-only">Opções de entrega</legend></fieldset>
+</section>
+<h2>Resumo do pedido</h2>
 
             <div
               id="checkoutItems"
@@ -290,16 +298,14 @@
 
               <span>Frete</span>
 
-              <span>
-                A calcular
-              </span>
+              <span data-shipping-summary>Selecione a entrega</span>
 
             </div>
 
 
             <div class="summary-total">
 
-              <span>Total</span>
+              <span data-total-label>Total</span>
 
               <strong id="checkoutTotal">
                 R$ 0,00
@@ -347,10 +353,12 @@
   </footer>
 
 
-  <script src="script.js?v=20261002-mobile-checkout"></script>
+  <script src="script.js?v=20261002-frete"></script>
+  <script src="frete.js?v=20261002-frete"></script>
 
 </body>
 
 </html>
+
 
 

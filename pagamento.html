@@ -8,7 +8,7 @@
   <title>Pagamento | Navoryx</title>
 
   <link rel="icon" type="image/png" href="img/favicon.png">
-  <link rel="stylesheet" href="style.css?v=20261002-mobile-checkout">
+  <link rel="stylesheet" href="style.css?v=20261002-frete">
   <link rel="stylesheet" href="checkout-status.css?v=20260927-1">
 </head>
 
@@ -108,9 +108,8 @@
 
           <aside class="checkout-summary">
 
-            <h2>
-              Resumo do pedido
-            </h2>
+            <h2>Resumo do pedido</h2>
+<p id="shippingPaymentInfo" class="checkout-status"></p>
 
             <div
               id="paymentItems"
@@ -131,15 +130,13 @@
 
               <span>Frete</span>
 
-              <span>
-                A calcular
-              </span>
+              <span data-shipping-summary>Selecione a entrega</span>
 
             </div>
 
             <div class="summary-total">
 
-              <span>Total</span>
+              <span data-total-label>Total</span>
 
               <strong id="paymentTotal">
                 R$ 0,00
@@ -183,9 +180,11 @@
   </footer>
 
 
-  <script src="script.js?v=20261002-mobile-checkout"></script>
+  <script src="script.js?v=20261002-frete"></script>
+  <script src="frete.js?v=20261002-frete"></script>
 
 </body>
 
 </html>
+
 

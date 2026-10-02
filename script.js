@@ -1170,6 +1170,7 @@ function renderizarCarrinho() {
   }
 
   atualizarContadorCarrinho();
+  if (typeof atualizarResumoFrete === 'function') atualizarResumoFrete();
 }
 
 
@@ -1751,6 +1752,7 @@ function atualizarResumosCompra() {
   renderizarCarrinho();
   renderizarResumoCheckout();
   renderizarResumoPagamento();
+  if (typeof atualizarResumoFrete === 'function') atualizarResumoFrete();
 }
 
 function definirPagamentoEmAndamento(ativo, texto = 'Ir para pagamento seguro') {
@@ -1801,7 +1803,7 @@ if (payButton) {
       const dados = await consultarLoja('https://navoryx-backend-2.onrender.com/criar-preferencia', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items })
+        body: JSON.stringify({ items, shipping: typeof obterFreteSelecionado === 'function' ? obterFreteSelecionado() : null, customer: typeof obterClienteEntrega === 'function' ? obterClienteEntrega() : null })
       });
       let linkPagamento;
       try { linkPagamento = new URL(dados.init_point); } catch (_) { /* Validado abaixo. */ }
@@ -1854,3 +1856,4 @@ window.addEventListener('pageshow', function(event) {
     mostrarStatusCompra('Confira o status no Mercado Pago antes de iniciar outro pagamento.');
   }
 });
+
