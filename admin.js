@@ -16,6 +16,16 @@ const siteConfigForm = document.getElementById('siteConfigForm');
 const siteConfigMessage = document.getElementById('siteConfigMessage');
 const siteConfigFields = ['nome_loja','logo_url','texto_topo','titulo_banner','subtitulo_banner','banner_url','cor_principal','cor_secundaria','whatsapp','email','texto_rodape'];
 let siteConfig = {};
+const embalagemFields = {
+  pesoGramas: document.getElementById('adminWeight'),
+  comprimento: document.getElementById('adminLength'),
+  largura: document.getElementById('adminWidth'),
+  altura: document.getElementById('adminHeight')
+};
+const shippingConfigForm = document.getElementById('shippingConfigForm');
+const shippingConfigMessage = document.getElementById('shippingConfigMessage');
+const shippingOrigin = document.getElementById('shippingOrigin');
+let origemCarregada = false;
 
 const fields = {
   name: document.getElementById('adminName'),
@@ -42,7 +52,7 @@ function escapeHtml(value) {
 function formatarPreco(valor) {
   return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
-function mostrarApp() { loginView.hidden = true; adminApp.hidden = false; carregarProdutos(); carregarSiteConfig(); document.dispatchEvent(new Event('navoryx:login')); }
+function mostrarApp() { loginView.hidden = true; adminApp.hidden = false; carregarProdutos(); carregarSiteConfig(); carregarOrigemFrete(); document.dispatchEvent(new Event('navoryx:login')); }
 function mostrarLogin() { adminApp.hidden = true; loginView.hidden = false; }
 function logout() { sessionStorage.removeItem(TOKEN_KEY); produtoEditando = null; mostrarLogin(); document.dispatchEvent(new Event('navoryx:logout')); }
 
@@ -104,7 +114,7 @@ async function verificarSessao() {
 async function carregarProdutos() {
   productsContainer.innerHTML = '<p>Carregando...</p>';
   try {
-    produtos = await api('/produtos');
+    produtos = await api('/admin/produtos', { headers: authHeaders() });
     renderizarProdutos();
   } catch (erro) {
     productsContainer.innerHTML = '<p>' + escapeHtml(erro.message) + '</p>';
@@ -121,6 +131,37 @@ function preencherSiteConfig(config) {
   document.getElementById('configSecondaryPicker').value = /^#[0-9a-f]{6}$/i.test(siteConfig.cor_secundaria || '') ? siteConfig.cor_secundaria : '#2563eb';
   atualizarPrevia();
 }
+
+async function carregarOrigemFrete() {
+  origemCarregada = false;
+  document.getElementById('saveShippingConfig').disabled = true;
+  try {
+    const config = await api('/admin/frete-config', { headers: authHeaders() });
+    shippingOrigin.value = config.cep_origem || '';
+    shippingConfigMessage.textContent = '';
+    origemCarregada = true;
+    document.getElementById('saveShippingConfig').disabled = false;
+  } catch (erro) {
+    shippingConfigMessage.textContent = erro.message;
+    shippingConfigMessage.className = 'admin-message error';
+  }
+}
+shippingConfigForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const button = document.getElementById('saveShippingConfig');
+  if (!origemCarregada || button.disabled) return;
+  button.disabled = true;
+  shippingConfigMessage.className = 'admin-message';
+  shippingConfigMessage.textContent = 'Salvando…';
+  try {
+    const config = await api('/admin/frete-config', { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ cep_origem: shippingOrigin.value.trim() }) });
+    shippingOrigin.value = config.cep_origem || '';
+    shippingConfigMessage.textContent = 'Origem salva. Este dado fica restrito ao painel.';
+  } catch (erro) {
+    shippingConfigMessage.textContent = erro.message;
+    shippingConfigMessage.className = 'admin-message error';
+  } finally { button.disabled = false; }
+});
 
 function lerSiteConfigDoFormulario() {
   return Object.fromEntries(siteConfigFields.map(name => [name, String(siteConfigForm.elements.namedItem(name)?.value || '').trim()]));
@@ -291,6 +332,15 @@ form.addEventListener('submit', async event => {
     category: fields.category.value, description: fields.description.value.trim(),
     active: fields.active.checked
   };
+  const valoresEmbalagem = Object.entries(embalagemFields).map(([k, input]) => [k, input.value.trim()]);
+  const preenchidos = valoresEmbalagem.filter(([, v]) => v !== '').length;
+  if (preenchidos && preenchidos !== 4) {
+    formMessage.textContent = 'Preencha peso, comprimento, largura e altura da embalagem, ou deixe os quatro campos vazios.';
+    formMessage.className = 'admin-message error';
+    embalagemFields[valoresEmbalagem.find(([, v]) => !v)[0]].focus();
+    return;
+  }
+  dados.embalagem = preenchidos ? Object.fromEntries(valoresEmbalagem.map(([k, v]) => [k, Number(v)])) : null;
   saveButton.disabled = true;
   formMessage.className = 'admin-message';
   formMessage.textContent = 'Salvando...';
@@ -318,6 +368,7 @@ productsContainer.addEventListener('click', async event => {
       if (key === 'active') input.checked = produto.active !== false;
       else input.value = produto[key] ?? '';
     });
+    Object.entries(embalagemFields).forEach(([key, input]) => { input.value = produto.embalagem?.[key] ?? ''; });
     formTitle.textContent = 'Editar produto';
     saveButton.textContent = 'Salvar alterações';
     cancelEdit.hidden = false;
