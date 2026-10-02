@@ -14,7 +14,7 @@ const saveButton = document.getElementById('saveButton');
 const formTitle = document.getElementById('formTitle');
 const siteConfigForm = document.getElementById('siteConfigForm');
 const siteConfigMessage = document.getElementById('siteConfigMessage');
-const siteConfigFields = ['nome_loja','logo_url','texto_topo','titulo_banner','subtitulo_banner','banner_url','cor_principal','cor_secundaria','whatsapp','email','texto_rodape'];
+const siteConfigFields = ['nome_loja','logo_url','texto_topo','titulo_banner','subtitulo_banner','banner_url','cor_principal','cor_secundaria','whatsapp','email','texto_rodape','horario_atendimento'];
 let siteConfig = {};
 const embalagemFields = {
   pesoGramas: document.getElementById('adminWeight'),
