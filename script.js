@@ -276,7 +276,7 @@ function renderizarProdutosLoja(lista = produtosLoja) {
         <img
           src="${imagemProduto}"
           alt="${nomeProduto}"
-          class="product-image"
+          class="product-image" loading="lazy" decoding="async"
         >
 
         <h3>
@@ -1318,151 +1318,73 @@ const estadoInput =
   document.getElementById('estado');
 
 
+const cepStatus = document.getElementById('cepStatus');
+let consultaCep = null;
+let ultimoCepConsultado = '';
+let versaoCep = 0;
+
+function mostrarStatusCep(mensagem, tipo = 'info') {
+  if (!cepStatus) return;
+  cepStatus.textContent = mensagem;
+  cepStatus.dataset.type = tipo;
+  cepStatus.hidden = !mensagem;
+}
+
 async function buscarCep(cepInformado) {
-
-  const cepLimpo =
-    String(cepInformado || '')
-      .replace(/\D/g, '');
-
-  if (cepLimpo.length !== 8) {
-    return;
-  }
-
+  const cepLimpo = String(cepInformado || '').replace(/\D/g, '');
+  if (cepLimpo.length !== 8 || consultaCep?.cep === cepLimpo || ultimoCepConsultado === cepLimpo) return;
+  consultaCep?.controller.abort();
+  const version = ++versaoCep;
+  const controller = new AbortController();
+  consultaCep = { cep: cepLimpo, controller };
+  const campos = [enderecoInput, bairroInput, cidadeInput, estadoInput];
+  const anteriores = campos.map(campo => campo?.value || '');
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  mostrarStatusCep('Consultando CEP… Você pode continuar preenchendo seus dados.');
+  cepInput?.setAttribute('aria-busy', 'true');
   try {
-
-    if (cepInput) {
-      cepInput.disabled = true;
-    }
-
-    const resposta =
-      await fetch(
-        `https://viacep.com.br/ws/${cepLimpo}/json/`
-      );
-
-    if (!resposta.ok) {
-      throw new Error(
-        'Não foi possível consultar o CEP.'
-      );
-    }
-
-    const dados =
-      await resposta.json();
-
-    if (dados.erro) {
-
-      alert(
-        'CEP não encontrado. Confira o número digitado.'
-      );
-
+    const resposta = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`, { signal: controller.signal });
+    if (!resposta.ok) throw new Error('Consulta indisponível');
+    const dados = await resposta.json();
+    if (version !== versaoCep || cepInput?.value.replace(/\D/g, '') !== cepLimpo) return;
+    if (!dados || dados.erro) {
+      mostrarStatusCep('CEP não encontrado. Confira o número ou preencha o endereço manualmente.', 'error');
       return;
     }
-
-    if (enderecoInput) {
-
-      enderecoInput.value =
-        dados.logradouro || '';
-    }
-
-    if (bairroInput) {
-
-      bairroInput.value =
-        dados.bairro || '';
-    }
-
-    if (cidadeInput) {
-
-      cidadeInput.value =
-        dados.localidade || '';
-    }
-
-    if (estadoInput) {
-
-      estadoInput.value =
-        dados.uf || '';
-    }
-
-    const numeroInput =
-      document.getElementById('numero');
-
-    if (numeroInput) {
-
-      numeroInput.focus();
-    }
-
-  } catch (erro) {
-
-    console.error(
-      'Erro ao buscar CEP:',
-      erro
-    );
-
-    alert(
-      'Não foi possível buscar o CEP agora. Tente novamente.'
-    );
-
+    [dados.logradouro, dados.bairro, dados.localidade, dados.uf].forEach((valor, index) => {
+      // Não sobrescreva alterações feitas enquanto a consulta estava em andamento.
+      if (campos[index] && campos[index].value === anteriores[index] && valor) campos[index].value = valor;
+    });
+    ultimoCepConsultado = cepLimpo;
+    mostrarStatusCep('CEP consultado. Confira o endereço e informe o número.');
+  } catch (_) {
+    if (version === versaoCep) mostrarStatusCep('Não foi possível consultar o CEP agora. Você pode preencher o endereço manualmente.', 'error');
   } finally {
-
-    if (cepInput) {
-
-      cepInput.disabled =
-        false;
-
-      cepInput.focus();
+    clearTimeout(timeout);
+    if (version === versaoCep) {
+      consultaCep = null;
+      cepInput?.setAttribute('aria-busy', 'false');
     }
   }
 }
 
-
 if (cepInput) {
-
-  cepInput.addEventListener(
-    'input',
-    function() {
-
-      let valor =
-        cepInput.value
-          .replace(/\D/g, '')
-          .slice(0, 8);
-
-      if (valor.length > 5) {
-
-        valor =
-          valor.slice(0, 5) +
-          '-' +
-          valor.slice(5);
-      }
-
-      cepInput.value =
-        valor;
-
-      const cepNumerico =
-        valor.replace(/\D/g, '');
-
-      if (cepNumerico.length === 8) {
-
-        buscarCep(
-          cepNumerico
-        );
-      }
+  cepInput.addEventListener('input', function() {
+    const digits = cepInput.value.replace(/\D/g, '').slice(0, 8);
+    cepInput.value = digits.length > 5 ? digits.slice(0, 5) + '-' + digits.slice(5) : digits;
+    if (digits !== ultimoCepConsultado) ultimoCepConsultado = '';
+    if (consultaCep && consultaCep.cep !== digits) {
+      versaoCep++;
+      consultaCep.controller.abort();
+      consultaCep = null;
+      cepInput.setAttribute('aria-busy', 'false');
+      mostrarStatusCep('');
     }
-  );
-
-  cepInput.addEventListener(
-    'blur',
-    function() {
-
-      const cepNumerico =
-        cepInput.value
-          .replace(/\D/g, '');
-
-      if (cepNumerico.length === 8) {
-
-        buscarCep(
-          cepNumerico
-        );
-      }
-    }
-  );
+    if (digits.length === 8) buscarCep(digits);
+  });
+  cepInput.addEventListener('blur', function() {
+    buscarCep(cepInput.value);
+  });
 }
 
 
@@ -1676,10 +1598,12 @@ if (checkoutForm) {
           ).toUpperCase()
       };
 
-      localStorage.setItem(
-        'navoryxCheckout',
-        JSON.stringify(dadosCliente)
-      );
+      try {
+        localStorage.setItem('navoryxCheckout', JSON.stringify(dadosCliente));
+      } catch (_) {
+        mostrarStatusCompra('O navegador não permitiu salvar os dados. Libere o armazenamento deste site e tente novamente.', 'error');
+        return;
+      }
 
       window.location.href =
         'pagamento.html';
@@ -1920,3 +1844,13 @@ renderizarCarrinho();
 // Atualiza também carrinhos salvos antes da correção dos preços promocionais.
 // No pagamento, o servidor já valida o carrinho; a consulta só ocorre em caso de conflito.
 if (!paymentItems) prepararResumoCompra();
+
+
+// Navegadores móveis podem restaurar o botão desativado ao voltar do Mercado Pago.
+window.addEventListener('pageshow', function(event) {
+  if (event.persisted && payButton) {
+    definirPagamentoEmAndamento(false);
+    atualizarResumosCompra();
+    mostrarStatusCompra('Confira o status no Mercado Pago antes de iniciar outro pagamento.');
+  }
+});

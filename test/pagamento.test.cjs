@@ -34,7 +34,10 @@ async function abrirPagina({ cart = [item()], catalogo = [produto], request, pag
   const memory = new Map([['navoryxCart', JSON.stringify(cart)]]);
   const requests = [];
   const state = { catalogo, request };
-  const window = { location: { href: `${pagina}.html`, search: '' } };
+  const windowListeners = new Map();
+  const window = { location: { href: `${pagina}.html`, search: '' },
+    addEventListener(type, fn) { windowListeners.set(type, fn); } };
+  window.dispatch = (type, event) => windowListeners.get(type)?.(event);
   const context = vm.createContext({
     window, URL, URLSearchParams, AbortController, TypeError, setTimeout, clearTimeout,
     console: { error() {}, warn() {} },
@@ -202,4 +205,16 @@ test('carrinho vazio ou armazenamento inválido não inicia pagamento', async ()
     assert.equal(page.nodes.payButton.disabled, true);
     assert.equal(page.requests.length, 0);
   }
+});
+
+
+
+test('voltar do Mercado Pago restaura o botão no navegador móvel', async () => {
+  const page = await abrirPagina();
+  await page.nodes.payButton.click();
+  assert.equal(page.nodes.payButton.disabled, true);
+  page.window.dispatch('pageshow', { persisted: true });
+  assert.equal(page.nodes.payButton.disabled, false);
+  assert.match(page.nodes.checkoutStatus.textContent, /Confira o status/);
+  assert.equal(page.posts().length, 1);
 });
