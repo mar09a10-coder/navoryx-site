@@ -68,6 +68,12 @@
                 <div class="admin-field"><label for="adminCategory">Categoria *</label><select id="adminCategory" required><option value="">Selecione</option><option value="audio">Áudio</option><option value="smartwatch">Smartwatch</option><option value="cabos">Cabos e Carregadores</option><option value="celular">Celulares e Acessórios</option><option value="outros">Outros</option></select></div>
                 <div class="admin-field admin-field-full"><label for="adminImage">Imagem (URL ou caminho) *</label><input type="text" id="adminImage" placeholder="img/produto.jpg ou https://..." required></div>
                 <div class="admin-field admin-field-full"><label for="adminDescription">Descrição *</label><textarea id="adminDescription" rows="5" required></textarea></div>
+                <h3 class="admin-subheading admin-field-full">Embalagem para envio</h3>
+                <p class="admin-preview-note admin-field-full">Dados privados, disponíveis somente no painel. Pese e meça uma unidade já embalada, pronta para postagem. Preencha os quatro campos para preparar o cálculo do frete.</p>
+                <div class="admin-field"><label for="adminWeight">Peso com embalagem (gramas)</label><input type="number" id="adminWeight" min="1" max="1000000" step="1" placeholder="Ex.: 250"></div>
+                <div class="admin-field"><label for="adminLength">Comprimento (cm)</label><input type="number" id="adminLength" min="0.1" max="1000" step="0.1" placeholder="Ex.: 20"></div>
+                <div class="admin-field"><label for="adminWidth">Largura (cm)</label><input type="number" id="adminWidth" min="0.1" max="1000" step="0.1" placeholder="Ex.: 15"></div>
+                <div class="admin-field"><label for="adminHeight">Altura (cm)</label><input type="number" id="adminHeight" min="0.1" max="1000" step="0.1" placeholder="Ex.: 10"></div>
                 <div class="admin-field admin-field-full"><label><input type="checkbox" id="adminActive" checked>Produto visível na loja</label></div>
               </div>
               <p id="formMessage" class="admin-message" aria-live="polite"></p>
@@ -81,6 +87,15 @@
         </div>
         </section>
         <section id="sitePanel" class="admin-panel" role="tabpanel" data-panel="site" hidden>
+          <div class="admin-card">
+            <h2>Origem dos envios</h2>
+            <p class="admin-preview-note">Configuração privada. Informe uma vez o CEP de onde os produtos sairão. O cadastro destes dados não ativa a integração de frete por si só.</p>
+            <form id="shippingConfigForm">
+              <div class="admin-field"><label for="shippingOrigin">CEP de origem</label><input id="shippingOrigin" type="text" inputmode="numeric" maxlength="9" pattern="[0-9]{5}-?[0-9]{3}" placeholder="00000-000"></div>
+              <p id="shippingConfigMessage" class="admin-message" role="status" aria-live="polite"></p>
+              <button id="saveShippingConfig" type="submit" class="product-buy-button">Salvar origem dos envios</button>
+            </form>
+          </div>
           <div class="admin-card">
             <span class="eyebrow">PERSONALIZAÇÃO</span><h2>Configurações da loja</h2>
             <p>Edite os textos e contatos principais sem alterar os arquivos do site.</p>
@@ -178,7 +193,7 @@
       </div>
     </section>
   </main>
-  <script src="admin.js?v=20260927-publicacao1"></script>
+  <script src="admin.js?v=20261002-embalagem1"></script>
   <script src="mercadolivre-preenchimento.js?v=20260927-preenchimento2"></script>
   <script src="mercadolivre-admin.js?v=20260928-campos-condicionais"></script>
 </body>
