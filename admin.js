@@ -302,7 +302,7 @@ function renderizarProdutos() {
       <div class="admin-product-info">
         <strong>${escapeHtml(produto.name)}</strong>
         <span>${formatarPreco(produto.salePrice || produto.price)}</span>
-        <small>SKU: ${escapeHtml(produto.sku || '—')} • Estoque: ${Number(produto.stock || 0)}</small>
+        <small>SKU: ${escapeHtml(produto.sku || '—')} • Físico: ${Number(produto.stock || 0)} • Reservado: ${Number(produto.reservedStock || 0)} • Disponível: ${Number(produto.availableStock ?? produto.stock ?? 0)}</small>
         <small>Custo: ${produto.cost === null || produto.cost === undefined ? 'não informado' : formatarPreco(produto.cost)} • Margem unitária: ${produto.cost === null || produto.cost === undefined ? '—' : formatarPreco((produto.salePrice || produto.price) - produto.cost)}</small>
         <small>${produto.active !== false ? '🟢 Visível na loja' : '🔴 Oculto'}</small>
       </div>

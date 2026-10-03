@@ -60,10 +60,16 @@ async function atualizarPrecosCarrinho() {
     if (!Number.isInteger(Number(item.quantity)) || Number(item.quantity) < 1 || Number(item.quantity) > 99) {
       throw new Error('Confira as quantidades no carrinho. São permitidas de 1 a 99 unidades por produto.');
     }
+    const estoque = Math.max(0, Math.floor(Number(produto.stock) || 0));
+    if (Number(item.quantity) > estoque) {
+      throw new Error(estoque > 0
+        ? 'O estoque mudou e restam apenas ' + estoque + ' unidade(s) de ' + (produto.name || 'um produto') + '. Ajuste o carrinho.'
+        : (produto.name || 'Um produto') + ' está esgotado. Remova o item do carrinho.');
+    }
     if (!Number.isFinite(Number(item.price)) || Math.round(Number(item.price) * 100) !== Math.round(preco * 100)) {
       precosAlterados = true;
     }
-    return { ...item, id: produto.id, name: produto.name, image: produto.image || '', price: preco };
+    return { ...item, id: produto.id, name: produto.name, image: produto.image || '', price: preco, stock: estoque };
   });
   salvarCarrinho(carrinho);
   return { carrinho, precosAlterados };
@@ -175,6 +181,12 @@ function adicionarAoCarrinho(produto, quantidade = 1) {
         String(produto.id)
     );
 
+  const estoque = Math.max(0, Math.floor(Number(produto.stock) || 0));
+  const atual = Number(produtoExistente?.quantity || 0);
+  if (estoque <= 0 || atual + quantidadeAdicionar > estoque) {
+    return false;
+  }
+
   if (produtoExistente) {
 
     produtoExistente.price = precoAtualProduto(produto);
@@ -192,11 +204,13 @@ function adicionarAoCarrinho(produto, quantidade = 1) {
       name: produto.name || 'Produto',
       price: precoAtualProduto(produto),
       image: produto.image || '',
+      stock: estoque,
       quantity: quantidadeAdicionar
     });
   }
 
   salvarCarrinho(carrinho);
+  return true;
 }
 
 
@@ -265,6 +279,8 @@ function renderizarProdutosLoja(lista = produtosLoja) {
 
     const precoProduto =
       precoAtualProduto(produto);
+    const estoqueProduto =
+      Math.max(0, Math.floor(Number(produto.stock) || 0));
 
     card.dataset.search = `
       ${nomeProduto}
@@ -307,8 +323,10 @@ function renderizarProdutosLoja(lista = produtosLoja) {
         data-name="${nomeProduto}"
         data-price="${precoProduto}"
         data-image="${imagemProduto}"
+        data-stock="${estoqueProduto}"
+        ${estoqueProduto <= 0 ? 'disabled' : ''}
       >
-        Adicionar ao Carrinho
+        ${estoqueProduto <= 0 ? 'Produto esgotado' : 'Adicionar ao Carrinho'}
       </button>
       </div>
 
@@ -448,13 +466,18 @@ document.addEventListener(
         Number(botao.dataset.price),
 
       image:
-        botao.dataset.image
+        botao.dataset.image,
+      stock:
+        Number(botao.dataset.stock || 0)
     };
 
-    adicionarAoCarrinho(
+    if (!adicionarAoCarrinho(
       produto,
       1
-    );
+    )) {
+      botao.textContent = 'Sem estoque';
+      return;
+    }
 
     const textoOriginal =
       botao.textContent;
@@ -672,7 +695,8 @@ if (increaseButton) {
     'click',
     function() {
 
-      quantidadeProduto++;
+      const estoque = Math.max(0, Math.floor(Number(produtoAtual?.stock) || 0));
+      if (quantidadeProduto < estoque) quantidadeProduto++;
 
       atualizarQuantidadeProduto();
     }
@@ -877,9 +901,15 @@ async function carregarProdutoIndividual() {
   }
 
   if (buyButton) {
-
-    buyButton.style.display =
-      '';
+    const estoque = Math.max(0, Math.floor(Number(produto.stock) || 0));
+    buyButton.style.display = '';
+    buyButton.disabled = estoque <= 0;
+    buyButton.textContent = estoque <= 0 ? 'Produto esgotado' : '🛒 Adicionar ao carrinho';
+    if (increaseButton) increaseButton.disabled = estoque <= 1;
+    if (decreaseButton) decreaseButton.disabled = estoque <= 0;
+    const status = document.getElementById('productStockStatus');
+    if (status) status.textContent = estoque <= 0 ? 'Sem estoque no momento' :
+      estoque <= 3 ? 'Últimas ' + estoque + ' unidade(s) disponíveis' : 'Em estoque';
   }
 }
 
@@ -898,10 +928,13 @@ if (buyButton) {
         return;
       }
 
-      adicionarAoCarrinho(
+      if (!adicionarAoCarrinho(
         produtoAtual,
         quantidadeProduto
-      );
+      )) {
+        buyButton.textContent = 'Quantidade indisponível';
+        return;
+      }
 
       const textoOriginal =
         buyButton.textContent;
@@ -1234,11 +1267,9 @@ if (cartItems) {
           );
 
         if (item) {
-
-          alterarQuantidadeCarrinho(
-            id,
-            Number(item.quantity || 1) + 1
-          );
+          const estoque = Math.max(0, Math.floor(Number(item.stock) || 0));
+          const proxima = Number(item.quantity || 1) + 1;
+          if (proxima <= estoque) alterarQuantidadeCarrinho(id, proxima);
         }
       }
 
