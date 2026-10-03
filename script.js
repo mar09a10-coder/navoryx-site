@@ -1761,6 +1761,16 @@ function renderizarResumoPagamento() {
 const checkoutStatus = document.getElementById('checkoutStatus');
 let pagamentoEmAndamento = false;
 let checkoutAttempt = { fingerprint: '', key: '' };
+function mostrarUltimoPedido() {
+  const link=document.getElementById('lastOrderLink');if(!link)return;
+  try {
+    const url=new URL(localStorage.getItem('navoryxLastOrder')||'');
+    if(url.origin==='https://navoryx-site.onrender.com' && url.pathname==='/retorno.html' && /^[a-f0-9]{64}$/.test(url.searchParams.get('pedido')||'')) {
+      link.href=url.href;link.hidden=false;
+    }
+  } catch (_) { /* Ainda não há pedido neste navegador. */ }
+}
+mostrarUltimoPedido();
 
 function mostrarStatusCompra(mensagem, tipo = 'info') {
   if (!checkoutStatus) return;
@@ -1835,7 +1845,11 @@ if (payButton) {
       if (!linkPagamento || linkPagamento.origin !== 'https://www.mercadopago.com.br') {
         throw new Error('Não foi possível obter o link seguro do Mercado Pago. Tente novamente.');
       }
-      try { localStorage.setItem('navoryxPaymentCart', JSON.stringify({ cart: localStorage.getItem('navoryxCart') })); } catch (_) {}
+      try {
+        localStorage.setItem('navoryxPaymentCart', JSON.stringify({ cart: localStorage.getItem('navoryxCart') }));
+        if(dados.tracking_url) localStorage.setItem('navoryxLastOrder',dados.tracking_url);
+        mostrarUltimoPedido();
+      } catch (_) {}
       window.location.href = linkPagamento.href;
       redirecionando = true;
     } catch (erro) {

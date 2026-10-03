@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="modern.css?v=20261003-art1">
 
   <style>
+    #cancelOrder[hidden] { display: none !important; }
     body {
       min-height: 100vh;
       display: flex;
@@ -84,6 +85,7 @@
       </p>
 
       <div id="orderTracking" aria-live="polite"></div>
+      <button id="cancelOrder" type="button" class="payment-return-button" style="margin-bottom:16px;cursor:pointer;background:#293446" hidden>Cancelar pedido sem pagamento</button>
       <button id="refreshOrder" type="button" class="payment-return-button" style="margin-bottom:16px;cursor:pointer">Atualizar pagamento e rastreio</button>
       <a href="index.html" class="payment-return-button">
         Voltar para a loja
@@ -93,9 +95,8 @@
 
   </main>
 
-  <script src="acompanhar-pedido.js?v=20261003-melhorenvio1"></script>
+  <script src="acompanhar-pedido.js?v=20261003-pedidos2"></script>
 
 </body>
 
 </html>
-

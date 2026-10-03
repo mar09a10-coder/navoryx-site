@@ -113,6 +113,8 @@
             </form>
           </div>
           <div class="admin-toolbar"><h2>Pedidos da loja</h2><button id="refreshOrders" class="admin-secondary" type="button">Atualizar lista</button></div>
+          <div class="admin-field"><label for="ordersFilter">Mostrar pedidos</label><select id="ordersFilter"><option value="paid">Pagos</option><option value="waiting">Aguardando pagamento / em análise</option><option value="closed">Cancelados / expirados / recusados</option><option value="all">Todos os pedidos</option></select></div>
+          <p id="ordersCounts" class="admin-message"></p>
           <p id="shippingOrdersMessage" class="admin-message" role="status" aria-live="polite"></p>
           <div id="shippingOrders"></div>
           <div class="admin-actions"><button id="ordersPrevious" class="admin-secondary" type="button" disabled>Anterior</button><span id="ordersPage">Página 1</span><button id="ordersNext" class="admin-secondary" type="button" disabled>Próxima</button></div>
@@ -228,6 +230,6 @@
   <script src="admin.js?v=20261002-atendimento1"></script>
   <script src="mercadolivre-preenchimento.js?v=20260927-preenchimento2"></script>
   <script src="mercadolivre-admin.js?v=20260928-campos-condicionais"></script>
-<script src="envios-admin.js?v=20261003-melhorenvio1"></script>
+<script src="envios-admin.js?v=20261003-pedidos2"></script>
 </body>
 </html>

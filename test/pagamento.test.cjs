@@ -26,7 +26,7 @@ function elemento() {
 }
 
 async function abrirPagina({ cart = [item()], catalogo = [produto], request, pagina = 'pagamento' } = {}) {
-  const ids = ['cartCount', 'checkoutStatus'];
+  const ids = ['cartCount', 'checkoutStatus','lastOrderLink'];
   if (pagina === 'pagamento') ids.push('paymentItems', 'paymentProductsTotal', 'paymentTotal', 'payButton');
   if (pagina === 'carrinho') ids.push('cartItems', 'summaryProducts', 'cartTotal', 'checkoutButton');
   if (pagina === 'checkout') ids.push('checkoutItems', 'checkoutProductsTotal', 'checkoutTotal');
@@ -101,6 +101,13 @@ test('pagamento abre imediatamente sem consultar o catálogo', async () => {
   assert.equal(page.requests.length, 0);
   assert.equal(page.nodes.payButton.disabled, false);
   assert.match(page.nodes.paymentTotal.textContent, /30,00/);
+});
+test('guarda e mostra o acompanhamento antes de redirecionar ao Mercado Pago', async () => {
+  const tracking='https://navoryx-site.onrender.com/retorno.html?pedido='+'a'.repeat(64);
+  const page=await abrirPagina({request:call=>call.path==='/criar-preferencia'?resposta({init_point:linkSeguro,tracking_url:tracking}):null});
+  await page.nodes.payButton.click();
+  assert.equal(page.nodes.lastOrderLink.href,tracking);assert.equal(page.nodes.lastOrderLink.hidden,false);
+  assert.equal(page.window.location.href,linkSeguro);
 });
 
 test('envia o identificador e preço conferido ao criar o checkout', async () => {
