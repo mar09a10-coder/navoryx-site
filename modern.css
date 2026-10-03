@@ -9,8 +9,8 @@ button, input, select, textarea { font: inherit; }
 .header-inner { gap: 34px; padding: 12px 0; }
 /* O modo screen integra o fundo preto da fotografia ao cabeçalho,
    preservando integralmente o símbolo, as letras e as cores do logo. */
-.brand { width: 208px; height: 82px; justify-content: center; }
-.logo-navoryx { width: 300px; height: 120px; max-width: none; flex-shrink: 0; mix-blend-mode: screen; }
+.brand { width: 208px; height: 94px; justify-content: center; overflow: hidden; }
+.logo-navoryx { width: 280px; height: 112px; max-width: none; flex-shrink: 0; mix-blend-mode: screen; }
 .search { max-width: 650px; margin-left: auto; }
 .search input { background: #0d131e; border-color: var(--modern-border); border-radius: 12px 0 0 12px; padding: 14px 18px; font-size: 14px; }
 .search input::placeholder { color: #899ab0; }
@@ -37,7 +37,7 @@ button, input, select, textarea { font: inherit; }
 .hero-secondary span, .text-link span { margin-left: 8px; }
 .hero-secondary:hover, .text-link:hover { color: #64c2ff; }
 .hero-art { position: relative; height: 408px; min-width: 0; border: 1px solid #1b3656; border-radius: 24px; background-color: #040813; background-image: url("img/banner-principal-small.webp"); background-size: auto 139%; background-position: right 45%; overflow: hidden; }
-.hero-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, #030b19 0%, transparent 20%, transparent 90%, #04081388 100%); pointer-events: none; }
+.hero-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #040813 0%, transparent 4%), linear-gradient(0deg, #030b19 0%, transparent 20%, transparent 90%, #04081388 100%); pointer-events: none; }
 .hero-art-caption { position: absolute; z-index: 1; bottom: 18px; left: 0; right: 0; color: #a6bdd7; font-size: 9px; letter-spacing: 2px; text-align: center; }
 .store-home .section { padding: 60px 0; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 26px; }
@@ -94,8 +94,8 @@ button, input, select, textarea { font: inherit; }
 @media (max-width: 768px) {
   .container, .store-home .contact-section .container { width: calc(100% - 32px); }
   .header-inner { gap: 8px; padding: 8px 0 12px; }
-  .brand { width: 148px; height: 61px; }
-  .logo-navoryx { width: 220px; height: 88px; }
+  .brand { width: 148px; height: 70px; }
+  .logo-navoryx { width: 200px; height: 80px; }
   .cart-button { min-height: 44px; margin-left: auto; }
   .search { max-width: none; flex-basis: 100%; width: 100%; margin: 0; }
   .search input { font-size: 16px; padding: 12px 14px; }
