@@ -19,8 +19,8 @@ function obterFreteSelecionado() {
   try {
     const frete = JSON.parse(localStorage.getItem(FRETE_STORAGE_KEY));
     if (!frete || frete.cart !== identidadeCarrinhoFrete() || frete.expiresAt <= Date.now() ||
-        !/^\d{8}$/.test(frete.cep) || (frete.method !== 'combinar' &&
-        (!frete.token || !Number.isFinite(frete.price) || frete.price <= 0))) return null;
+        !/^\d{8}$/.test(frete.cep) || !/^melhorenvio:[12]$/.test(frete.method) ||
+        !frete.token || !Number.isFinite(frete.price) || frete.price <= 0) return null;
     return frete;
   } catch (_) { return null; }
 }
@@ -40,20 +40,20 @@ function atualizarResumoFrete() {
   const frete = obterFreteSelecionado();
   const subtotal = obterCarrinho().reduce((s, i) => s + Number(i.price) * Number(i.quantity), 0);
   document.querySelectorAll('[data-shipping-summary]').forEach(el => {
-    el.textContent = !frete ? 'Selecione a entrega' : frete.method === 'combinar' ? 'Valor a combinar' : formatarPreco(frete.price);
+    el.textContent = !frete ? 'Selecione a entrega' : formatarPreco(frete.price);
   });
   ['cartTotal', 'checkoutTotal', 'paymentTotal'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.textContent = formatarPreco(subtotal + (frete?.method !== 'combinar' ? frete?.price || 0 : 0));
+    if (el) el.textContent = formatarPreco(subtotal + (frete?.price || 0));
   });
   document.querySelectorAll('[data-total-label]').forEach(el => {
-    el.textContent = frete?.method === 'combinar' || !frete ? 'Produtos (frete pendente)' : 'Total';
+    el.textContent = !frete ? 'Produtos (frete pendente)' : 'Total';
   });
   const botao = document.getElementById('payButton');
-  if (botao) botao.textContent = frete?.method === 'combinar' ? 'Combinar entrega antes de pagar' : 'Ir para pagamento seguro';
+  if (botao && !pagamentoEmAndamento) botao.textContent = 'Ir para pagamento seguro';
   const info = document.getElementById('shippingPaymentInfo');
   if (info) info.textContent = !frete ? 'Volte ao checkout para selecionar ou recalcular a entrega.' :
-    frete.method === 'combinar' ? 'Entrega sujeita à confirmação. Consulte valor e prazo com o vendedor antes de pagar.' : frete.name;
+    frete.name;
 }
 
 function invalidarFrete() {
@@ -84,14 +84,14 @@ async function calcularFrete() {
     });
     if (versao !== freteConsultaVersao || cart !== identidadeCarrinhoFrete()) return;
     if (!Array.isArray(data.options) || data.cep !== cep || !Number.isFinite(data.expiresAt)) throw new Error('Não foi possível consultar as opções de entrega.');
-    freteOpcoes = data.options.filter(o => o.id === 'combinar' || (typeof o.token === 'string' && Number.isFinite(o.price) && o.price > 0));
+    freteOpcoes = data.options.filter(o => /^melhorenvio:[12]$/.test(o.id) && typeof o.token === 'string' && Number.isFinite(o.price) && o.price > 0);
     for (const opcao of freteOpcoes) {
       const label = document.createElement('label'); label.className = 'shipping-option';
       const radio = document.createElement('input'); radio.type = 'radio'; radio.name = 'shippingMethod'; radio.value = opcao.id;
       const texto = document.createElement('span');
       const titulo = document.createElement('strong'); titulo.textContent = opcao.name;
       const descricao = document.createElement('small'); descricao.textContent = opcao.description;
-      const preco = document.createElement('b'); preco.textContent = opcao.id === 'combinar' ? 'A combinar' : formatarPreco(opcao.price);
+      const preco = document.createElement('b'); preco.textContent = formatarPreco(opcao.price);
       texto.append(titulo, descricao); label.append(radio, texto, preco); freteLista.appendChild(label);
       radio.addEventListener('change', () => {
         if (cart !== identidadeCarrinhoFrete() || data.expiresAt <= Date.now()) { invalidarFrete(); return; }
@@ -144,33 +144,12 @@ if (checkoutForm) checkoutForm.addEventListener('submit', event => {
   }
 }, true);
 
-async function abrirConversaEntrega() {
-  const cliente = obterClienteEntrega();
-  const config = await consultarLoja('https://navoryx-backend-2.onrender.com/site-config');
-  const telefone = String(config.whatsapp || '').replace(/\D/g, '');
-  if (!/^\d{10,13}$/.test(telefone)) throw new Error('O contato da loja está indisponível. Tente novamente.');
-  const numero = telefone.length <= 11 ? '55' + telefone : telefone;
-  const frete = obterFreteSelecionado();
-  if (!frete || frete.method !== 'combinar' || cliente.cep?.replace(/\D/g, '') !== frete.cep) throw new Error('Volte ao checkout para confirmar o CEP e a entrega.');
-  const itens = obterCarrinho().map(i => `${i.quantity} × ${i.name}`).join('\n');
-  const mensagem = `Olá! Gostaria de confirmar a entrega de uma compra na Navoryx.\n${itens}\nCEP: ${frete.cep}\nBairro: ${cliente.bairro || ''}\nCidade: ${cliente.cidade || ''}/${cliente.estado || ''}\nÉ possível entregar pessoalmente? Qual seria o valor e o prazo? Ainda não efetuei o pagamento.`;
-  window.location.href = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`;
-}
-
 if (payButton) payButton.addEventListener('click', async event => {
   const frete = obterFreteSelecionado();
   const cliente = obterClienteEntrega();
   if (!frete || cliente.cep?.replace(/\D/g, '') !== frete.cep) {
     event.stopImmediatePropagation();
     mostrarStatusCompra('Volte ao checkout para selecionar ou recalcular a entrega.', 'error'); return;
-  }
-  if (frete.method === 'combinar') {
-    event.stopImmediatePropagation();
-    if (pagamentoEmAndamento) return;
-    definirPagamentoEmAndamento(true, 'Abrindo atendimento...');
-    try { await abrirConversaEntrega(); }
-    catch (erro) { mostrarStatusCompra(erro.message, 'error'); }
-    finally { definirPagamentoEmAndamento(false); atualizarResumoFrete(); }
   }
 }, true);
 

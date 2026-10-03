@@ -1565,6 +1565,7 @@ if (checkoutForm) {
       }
 
       const dadosCliente = {
+        documento: document.getElementById('documento')?.value.trim() || '',
 
         nome:
           document.getElementById('nome')?.value.trim() || '',
@@ -1740,6 +1741,7 @@ function renderizarResumoPagamento() {
 
 const checkoutStatus = document.getElementById('checkoutStatus');
 let pagamentoEmAndamento = false;
+let checkoutAttempt = { fingerprint: '', key: '' };
 
 function mostrarStatusCompra(mensagem, tipo = 'info') {
   if (!checkoutStatus) return;
@@ -1800,16 +1802,21 @@ if (payButton) {
         quantity: Number(item.quantity),
         price: Number(item.price)
       }));
+      const shipping = typeof obterFreteSelecionado === 'function' ? obterFreteSelecionado() : null;
+      const customer = typeof obterClienteEntrega === 'function' ? obterClienteEntrega() : null;
+      const fingerprint = JSON.stringify({items,shipping,customer});
+      if (checkoutAttempt.fingerprint !== fingerprint) checkoutAttempt = { fingerprint, key: crypto.randomUUID() };
       const dados = await consultarLoja('https://navoryx-backend-2.onrender.com/criar-preferencia', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items, shipping: typeof obterFreteSelecionado === 'function' ? obterFreteSelecionado() : null, customer: typeof obterClienteEntrega === 'function' ? obterClienteEntrega() : null })
+        body: JSON.stringify({ items, shipping, customer, checkoutKey: checkoutAttempt.key })
       });
       let linkPagamento;
       try { linkPagamento = new URL(dados.init_point); } catch (_) { /* Validado abaixo. */ }
       if (!linkPagamento || linkPagamento.origin !== 'https://www.mercadopago.com.br') {
         throw new Error('Não foi possível obter o link seguro do Mercado Pago. Tente novamente.');
       }
+      try { localStorage.setItem('navoryxPaymentCart', JSON.stringify({ cart: localStorage.getItem('navoryxCart') })); } catch (_) {}
       window.location.href = linkPagamento.href;
       redirecionando = true;
     } catch (erro) {

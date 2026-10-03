@@ -51,6 +51,7 @@
           <button class="admin-tab" type="button" role="tab" aria-selected="true" aria-controls="productsPanel" data-tab="products">Produtos e anúncios</button>
           <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="sitePanel" data-tab="site">Aparência da loja</button>
           <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="integrationsPanel" data-tab="integrations">Integrações</button>
+          <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="shippingPanel" data-tab="shipping">Pedidos e envios</button>
           <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="mlPanel" data-tab="mercadolivre">Mercado Livre</button>
         </nav>
         <section id="productsPanel" class="admin-panel" role="tabpanel" data-panel="products">
@@ -86,10 +87,38 @@
           </div>
         </div>
         </section>
+        <section id="shippingPanel" class="admin-panel" role="tabpanel" data-panel="shipping" hidden>
+          <div class="admin-card"><h2>Melhor Envio</h2>
+            <p id="melhorEnvioStatus" role="status">Verificando conexão…</p>
+            <p>Conecte sua conta e informe o remetente. Estes dados ficam restritos ao painel.</p>
+            <form id="melhorEnvioForm">
+              <div class="admin-field"><label for="meToken">Token de produção do Melhor Envio</label><input id="meToken" name="token" type="password" autocomplete="new-password" maxlength="16000" placeholder="Cole aqui para conectar; deixe vazio para manter o token salvo"></div>
+              <p class="admin-preview-note">No Melhor Envio, acesse Integrações / Área Dev e gere um token com permissões para cotar, adicionar ao carrinho, comprar, gerar, imprimir e consultar envios. Saldo da carteira é necessário para comprar etiquetas.</p>
+              <div class="admin-form-grid"><div class="admin-field"><label for="me_nome">Nome ou razão social</label><input id="me_nome" name="nome" type="text" required maxlength="200"></div>
+<div class="admin-field"><label for="me_documento">CPF ou CNPJ</label><input id="me_documento" name="documento" type="text" required maxlength="200"></div>
+<div class="admin-field"><label for="me_inscricao_estadual">Inscrição estadual ou ISENTO</label><input id="me_inscricao_estadual" name="inscricao_estadual" type="text" required maxlength="200"></div>
+<div class="admin-field"><label for="me_email">E-mail</label><input id="me_email" name="email" type="email" required maxlength="200"></div>
+<div class="admin-field"><label for="me_telefone">Telefone</label><input id="me_telefone" name="telefone" type="tel" required maxlength="200"></div>
+<div class="admin-field"><label for="me_cep">CEP de origem</label><input id="me_cep" name="cep" type="text" required maxlength="200"></div>
+<div class="admin-field"><label for="me_endereco">Endereço</label><input id="me_endereco" name="endereco" type="text" required maxlength="200"></div>
+<div class="admin-field"><label for="me_numero">Número</label><input id="me_numero" name="numero" type="text" required maxlength="200"></div>
+<div class="admin-field"><label for="me_complemento">Complemento</label><input id="me_complemento" name="complemento" type="text" maxlength="200"></div>
+<div class="admin-field"><label for="me_bairro">Bairro</label><input id="me_bairro" name="bairro" type="text" required maxlength="200"></div>
+<div class="admin-field"><label for="me_cidade">Cidade</label><input id="me_cidade" name="cidade" type="text" required maxlength="200"></div>
+<div class="admin-field"><label for="me_estado">UF</label><input id="me_estado" name="estado" type="text" required maxlength="2"></div>
+</div><p id="melhorEnvioMessage" class="admin-message" role="status" aria-live="polite"></p>
+              <button type="submit" class="product-buy-button">Conectar e salvar remetente</button>
+            </form>
+          </div>
+          <div class="admin-toolbar"><h2>Pedidos da loja</h2><button id="refreshOrders" class="admin-secondary" type="button">Atualizar lista</button></div>
+          <p id="shippingOrdersMessage" class="admin-message" role="status" aria-live="polite"></p>
+          <div id="shippingOrders"></div>
+          <div class="admin-actions"><button id="ordersPrevious" class="admin-secondary" type="button" disabled>Anterior</button><span id="ordersPage">Página 1</span><button id="ordersNext" class="admin-secondary" type="button" disabled>Próxima</button></div>
+        </section>
         <section id="sitePanel" class="admin-panel" role="tabpanel" data-panel="site" hidden>
           <div class="admin-card">
             <h2>Origem dos envios</h2>
-            <p class="admin-preview-note">Configuração privada. Informe uma vez o CEP de onde os produtos sairão. O cadastro destes dados não ativa a integração de frete por si só.</p>
+            <p class="admin-preview-note">Configuração privada. Informe uma vez o CEP de onde os produtos sairão. Conecte sua conta e complete o remetente em Pedidos e envios.</p>
             <form id="shippingConfigForm">
               <div class="admin-field"><label for="shippingOrigin">CEP de origem</label><input id="shippingOrigin" type="text" inputmode="numeric" maxlength="9" pattern="[0-9]{5}-?[0-9]{3}" placeholder="00000-000"></div>
               <p id="shippingConfigMessage" class="admin-message" role="status" aria-live="polite"></p>
@@ -197,5 +226,6 @@
   <script src="admin.js?v=20261002-atendimento1"></script>
   <script src="mercadolivre-preenchimento.js?v=20260927-preenchimento2"></script>
   <script src="mercadolivre-admin.js?v=20260928-campos-condicionais"></script>
+<script src="envios-admin.js?v=20261003-melhorenvio1"></script>
 </body>
 </html>

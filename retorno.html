@@ -3,6 +3,8 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>Resultado do Pagamento | Navoryx</title>
@@ -79,6 +81,8 @@
         Aguarde enquanto verificamos o resultado do seu pagamento.
       </p>
 
+      <div id="orderTracking" aria-live="polite"></div>
+      <button id="refreshOrder" type="button" class="payment-return-button" style="margin-bottom:16px;cursor:pointer">Atualizar pagamento e rastreio</button>
       <a href="index.html" class="payment-return-button">
         Voltar para a loja
       </a>
@@ -87,55 +91,7 @@
 
   </main>
 
-  <script>
-    const parametros =
-      new URLSearchParams(window.location.search);
-
-    const status =
-      parametros.get('status');
-
-    const statusIcon =
-      document.getElementById('statusIcon');
-
-    const statusTitle =
-      document.getElementById('statusTitle');
-
-    const statusMessage =
-      document.getElementById('statusMessage');
-
-    if (status === 'approved') {
-
-      statusIcon.textContent = '✅';
-
-      statusTitle.textContent =
-        'Pagamento aprovado!';
-
-      statusMessage.textContent =
-        'Seu pagamento foi aprovado com sucesso. Obrigado por comprar na Navoryx.';
-
-      localStorage.removeItem('navoryxCart');
-
-    } else if (status === 'pending') {
-
-      statusIcon.textContent = '⏳';
-
-      statusTitle.textContent =
-        'Pagamento pendente';
-
-      statusMessage.textContent =
-        'Seu pagamento ainda está sendo processado. Assim que houver uma atualização, o Mercado Pago informará o resultado.';
-
-    } else {
-
-      statusIcon.textContent = '❌';
-
-      statusTitle.textContent =
-        'Pagamento não aprovado';
-
-      statusMessage.textContent =
-        'O pagamento não foi concluído. Você pode voltar para a loja e tentar novamente.';
-    }
-  </script>
+  <script src="acompanhar-pedido.js?v=20261003-melhorenvio1"></script>
 
 </body>
 

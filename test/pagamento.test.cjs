@@ -39,7 +39,7 @@ async function abrirPagina({ cart = [item()], catalogo = [produto], request, pag
     addEventListener(type, fn) { windowListeners.set(type, fn); } };
   window.dispatch = (type, event) => windowListeners.get(type)?.(event);
   const context = vm.createContext({
-    window, URL, URLSearchParams, AbortController, TypeError, setTimeout, clearTimeout,
+    window, crypto: require('node:crypto').webcrypto, URL, URLSearchParams, AbortController, TypeError, setTimeout, clearTimeout,
     console: { error() {}, warn() {} },
     document: { getElementById: id => nodes[id] || null, createElement: elemento,
       addEventListener() {}, querySelector: () => null, querySelectorAll: () => [] },

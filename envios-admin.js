@@ -1,0 +1,107 @@
+'use strict';
+(() => {
+  const form = document.getElementById('melhorEnvioForm');
+  const status = document.getElementById('melhorEnvioStatus');
+  const message = document.getElementById('melhorEnvioMessage');
+  const list = document.getElementById('shippingOrders');
+  const orderMessage = document.getElementById('shippingOrdersMessage');
+  const senderFields = ['nome','documento','inscricao_estadual','email','telefone','cep','endereco','numero','complemento','bairro','cidade','estado'];
+  let orders = [], page = 0, busy = false, sessionGeneration = 0;
+  const statuses = {pending:'Aguardando pagamento',approved:'Pagamento aprovado',in_process:'Pagamento em análise',rejected:'Pagamento recusado',cancelled:'Pagamento cancelado',refunded:'Pagamento devolvido',charged_back:'Pagamento contestado',review:'Pagamento exige conferência',paid:'Frete comprado',generated:'Etiqueta gerada',printed:'Etiqueta impressa',posted:'Postado',released:'Em transporte',delivered:'Entregue'};
+  async function shippingApi(path, options = {}) {
+    const response = await fetch(API_BASE + path, {...options,headers:authHeaders(),signal:AbortSignal.timeout(60000)});
+    const data = await response.json().catch(() => ({}));
+    if(response.status===401){logout();throw new Error('Sessão expirada. Entre novamente.');}
+    if(!response.ok)throw new Error(data.erro || 'Não foi possível concluir a operação. Atualize o pedido para conferir o resultado.');
+    return data;
+  }
+  async function loadConfig() {
+    const generation = sessionGeneration;
+    status.textContent='Verificando conexão…';
+    try {
+      const c=await shippingApi('/admin/melhorenvio');if(generation!==sessionGeneration)return;
+      status.textContent=c.connected?'Token cadastrado. Fretes sujeitos à disponibilidade da conta.':'Conecte sua conta para liberar o cálculo de frete.';
+      senderFields.forEach(k=>form.elements.namedItem(k).value=c.remetente[k]|| (k==='cep'?c.origem:''));
+      form.elements.namedItem('token').value='';
+    }catch(e){status.textContent=e.message;}
+  }
+  form.addEventListener('submit',async event=>{
+    event.preventDefault();const button=form.querySelector('[type="submit"]');if(button.disabled)return;
+    button.disabled=true;message.textContent='Validando a conexão e salvando o remetente…';message.className='admin-message';
+    try{
+      const remetente=Object.fromEntries(senderFields.map(k=>[k,form.elements.namedItem(k).value.trim()]));remetente.estado=remetente.estado.toUpperCase();
+      await shippingApi('/admin/melhorenvio',{method:'PUT',body:JSON.stringify({token:form.elements.namedItem('token').value.trim(),remetente})});
+      form.elements.namedItem('token').value='';message.textContent='Melhor Envio conectado e remetente salvo. Cadastre a embalagem de cada produto para liberar as cotações.';
+      carregarOrigemFrete();await loadConfig();
+    }catch(e){message.textContent=e.message;message.className='admin-message error';}finally{button.disabled=false;}
+  });
+  function render() {
+    list.innerHTML=orders.length?orders.map(order=>{
+      const c=order.customer,approved=order.payment_status==='approved',count=order.labels.length;
+      const generated=count===order.package_count && order.labels.every(l=>['generated','printed','posted','released','delivered'].includes(l.status));
+      const pending=order.labels.some(l=>l.status==='pending'),paid=order.labels.some(l=>l.status==='paid');
+      return `<article class="admin-card shipping-order" data-order="${escapeHtml(order.id)}">
+        <div class="admin-toolbar"><h3>Pedido ${escapeHtml(order.id.slice(0,8).toUpperCase())}</h3><strong>${escapeHtml(statuses[order.payment_status]||order.payment_status)}</strong></div>
+        <p>${escapeHtml(new Date(order.created_at).toLocaleString('pt-BR'))} · ${escapeHtml(c.nome)}</p>
+        <p>${order.items.map(i=>`${i.quantity} × ${escapeHtml(i.title)}`).join('<br>')}</p>
+        <p>${escapeHtml(c.endereco)}, ${escapeHtml(c.numero)} ${escapeHtml(c.complemento)}<br>${escapeHtml(c.bairro)} · ${escapeHtml(c.cidade)}/${escapeHtml(c.estado)} · CEP ${escapeHtml(c.cep)}</p>
+        <p>${escapeHtml(order.shipping_method)} · Frete pago pelo cliente: <strong>${formatarPreco(order.shipping_price)}</strong> · Total: <strong>${formatarPreco(order.total)}</strong></p>
+        <p>${count}/${order.package_count} pacote(s) preparado(s). Embale cada unidade separadamente, como cadastrado no produto.</p>
+        ${order.labels.map((l,i)=>`<p>Pacote ${i+1}: ${escapeHtml(statuses[l.status]||l.status)} ${l.tracking?`· Rastreio: <strong>${escapeHtml(l.tracking)}</strong>`:''} ${l.protocol?`· Protocolo: ${escapeHtml(l.protocol)}`:''}<br><small>ID: ${escapeHtml(l.id)}</small></p>`).join('')}
+        ${count<order.package_count?`<div class="admin-field"><label>Chave da NF-e (44 números)<input data-invoice value="${escapeHtml(order.invoice)}" inputmode="numeric" maxlength="44" ${count?'readonly':''}></label></div>`:''}
+        ${order.shipment_status==='cart_uncertain'?`<p class="admin-message error">Confira o carrinho no Melhor Envio. A criação ficou sem confirmação; vincule a etiqueta existente para continuar.</p><div class="admin-field"><label>ID da etiqueta existente<input data-recover placeholder="ID da etiqueta no Melhor Envio"></label></div>`:''}
+        ${order.purchase_uncertain?'<p class="admin-message error">A compra de frete aguarda confirmação. Confira a carteira no Melhor Envio e atualize este pedido.</p>':''}
+        <div class="admin-actions">
+          <button class="admin-secondary" data-action="refresh" type="button">Conferir pagamento e rastreio</button>
+          ${approved && count<order.package_count && order.shipment_status!=='cart_uncertain'?'<button class="product-buy-button" data-action="prepare" type="button">Preparar envio</button>':''}
+          ${approved && order.shipment_status==='cart_uncertain'?'<button class="admin-secondary" data-action="recover" type="button">Vincular etiqueta existente</button>':''}
+          ${approved && count===order.package_count && pending && !order.purchase_uncertain?`<button class="product-buy-button" data-action="buy" type="button">Comprar frete · ${formatarPreco(order.pending_cost_cents/100)}</button>`:''}
+          ${approved && count===order.package_count && paid && !pending?'<button class="product-buy-button" data-action="generate" type="button">Gerar etiquetas</button>':''}
+          ${approved && generated?'<button class="product-buy-button" data-action="print" type="button">Imprimir etiquetas</button>':''}
+          <a class="admin-secondary" href="https://melhorenvio.com.br" target="_blank" rel="noopener noreferrer">Abrir Melhor Envio</a>
+        </div>
+      </article>`;
+    }).join(''):'<p>Nenhum pedido registrado nesta página. Os novos pedidos do checkout aparecerão aqui.</p>';
+    document.getElementById('ordersPrevious').disabled=page===0;
+    document.getElementById('ordersPage').textContent='Página ' + (page+1);
+  }
+  async function loadOrders() {
+    if(busy)return;busy=true;const generation=sessionGeneration;
+    orderMessage.textContent='Carregando pedidos…';
+    try{const r=await shippingApi('/admin/pedidos?page='+page);if(generation!==sessionGeneration)return;
+      orders=r.orders;render();document.getElementById('ordersNext').disabled=!r.hasMore;orderMessage.textContent='Confira o pagamento do pedido para atualizar o status antes de preparar o envio.';
+    }catch(e){orderMessage.textContent=e.message;}finally{busy=false;}
+  }
+  list.addEventListener('click',async event=>{
+    const button=event.target.closest('[data-action]');if(!button || busy)return;
+    const card=button.closest('[data-order]'),id=card.dataset.order,action=button.dataset.action;
+    const order=orders.find(o=>o.id===id);const body={};
+    if(action==='prepare'){body.invoice=card.querySelector('[data-invoice]').value.trim();if(!/^\d{44}$/.test(body.invoice)){orderMessage.textContent='Informe a chave da NF-e com 44 números.';return;}}
+    if(action==='recover')body.labelId=card.querySelector('[data-recover]').value.trim();
+    if(action==='buy'){
+      if(!window.confirm(`Comprar as etiquetas por ${formatarPreco(order.pending_cost_cents/100)} usando o saldo da carteira do Melhor Envio?`))return;
+      body.confirmedCents=order.pending_cost_cents;
+    }
+    busy=true;list.querySelectorAll('button').forEach(b=>b.disabled=true);const generation=sessionGeneration;
+    orderMessage.textContent=action==='prepare'?'Preparando os pacotes…': 'Processando. Aguarde a confirmação…';
+    let result;
+    try{
+      do{
+        result=await shippingApi('/admin/pedidos/'+id+'/'+action,{method:'POST',body:JSON.stringify(body)});
+        if(generation!==sessionGeneration)return;
+        orderMessage.textContent=action==='prepare'?`${result.labels.length}/${result.package_count} pacotes preparados…`:'Operação confirmada.';
+      }while(action==='prepare' && result.labels.length<result.package_count);
+      orders=orders.map(o=>o.id===id?result:o);render();
+      if(result.url){const link=document.createElement('a');link.href=result.url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Abrir etiquetas para imprimir';link.className='admin-secondary';orderMessage.replaceChildren(link);}
+      else orderMessage.textContent=action==='generate'?'Etiquetas geradas. Imprima, cole em cada pacote e leve à agência dos Correios.':'Pedido atualizado.';
+    }catch(e){orderMessage.textContent=e.message+' Atualize a lista para conferir o resultado.';render();}
+    finally{busy=false;}
+  });
+  document.getElementById('refreshOrders').addEventListener('click',loadOrders);
+  document.getElementById('ordersPrevious').addEventListener('click',()=>{if(!busy&&page>0){page--;loadOrders();}});
+  document.getElementById('ordersNext').addEventListener('click',()=>{if(!busy){page++;loadOrders();}});
+  document.querySelector('.admin-tabs').addEventListener('click',e=>{if(e.target.closest('[data-tab="shipping"]')){loadConfig();loadOrders();}});
+  document.addEventListener('navoryx:login',()=>{sessionGeneration++;loadConfig();});
+  document.addEventListener('navoryx:logout',()=>{sessionGeneration++;orders=[];list.replaceChildren();form.reset();status.textContent='';message.textContent='';orderMessage.textContent='';});
+  if(token())loadConfig();
+})();

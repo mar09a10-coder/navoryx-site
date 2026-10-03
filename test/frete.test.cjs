@@ -15,7 +15,7 @@ function page() {
     'paymentTotal', 'shippingPaymentInfo', 'cep'].map(id => [id, eventNode()]));
   const summary = eventNode(); const label = eventNode(); const pay = eventNode(); const form = eventNode();
   const state = { request: async () => ({ cep: '29047535', expiresAt: Date.now() + 900000,
-    options: [{ id: 'correios:03220', name: 'Correios SEDEX', price: 21.56, description: '3 dias úteis', token: 'assinado' },
+    options: [{ id: 'melhorenvio:2', name: 'Correios SEDEX', price: 21.56, description: '3 dias úteis', token: 'assinado' },
       { id: 'combinar', name: 'Combinar entrega com o vendedor', price: null, description: 'Valor e prazo a confirmar' }] }) };
   const messages = []; const calls = [];
   const context = vm.createContext({ document: { getElementById: id => nodes[id] || null,
@@ -39,15 +39,13 @@ test('selecionar Correios soma o valor e guarda a cotação, sem mudar o foco', 
   assert.equal(p.nodes.paymentTotal.textContent, '81.56'); assert.equal(p.summary.textContent, '21.56');
   assert.equal(p.context.obterFreteSelecionado().token, 'assinado');
 });
-test('a combinar mantém frete pendente e impede pagamento até conversar', async () => {
-  const p = page(); await p.calculate(); p.select(1); p.customer();
-  assert.equal(p.nodes.paymentTotal.textContent, '60.00'); assert.equal(p.summary.textContent, 'Valor a combinar');
-  assert.match(p.label.textContent, /frete pendente/);
-  p.state.request = async () => ({ whatsapp: '27988732742' });
-  const e = event(); await p.pay.listeners.click(e);
-  assert.equal(e.stopped, true); assert.equal(p.calls.filter(c => c.url.includes('criar-preferencia')).length, 0);
-  const href = new URL(p.context.window.location.href); assert.equal(href.origin, 'https://wa.me');
-  assert.match(href.searchParams.get('text'), /Ainda não efetuei o pagamento/);
+test('entrega a combinar retornada por servidor antigo não é oferecida nem autoriza pagamento', async () => {
+  const p = page(); await p.calculate(); p.customer();
+  assert.equal(p.nodes.shippingOptions.children.length, 1);
+  p.memory.set('navoryxShipping', JSON.stringify({method:'combinar',cep:'29047535',cart:p.context.identidadeCarrinhoFrete(),expiresAt:Date.now()+900000}));
+  assert.equal(p.context.obterFreteSelecionado(),null);
+  const e=event();await p.pay.listeners.click(e);assert.equal(e.stopped,true);
+  assert.equal(p.context.window.location.href,'');
 });
 test('CEP alterado invalida cotação e bloqueia avanço', async () => {
   const p = page(); await p.calculate(); p.select(0);
