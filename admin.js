@@ -31,6 +31,7 @@ const fields = {
   name: document.getElementById('adminName'),
   sku: document.getElementById('adminSku'),
   price: document.getElementById('adminPrice'),
+  cost: document.getElementById('adminCost'),
   salePrice: document.getElementById('adminSalePrice'),
   stock: document.getElementById('adminStock'),
   image: document.getElementById('adminImage'),
@@ -52,7 +53,7 @@ function escapeHtml(value) {
 function formatarPreco(valor) {
   return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
-function mostrarApp() { loginView.hidden = true; adminApp.hidden = false; carregarProdutos(); carregarSiteConfig(); carregarOrigemFrete(); document.dispatchEvent(new Event('navoryx:login')); }
+function mostrarApp() { loginView.hidden = true; adminApp.hidden = false; carregarProdutos(); carregarSiteConfig(); carregarOrigemFrete(); prepararResumoFinanceiro(); document.dispatchEvent(new Event('navoryx:login')); }
 function mostrarLogin() { adminApp.hidden = true; loginView.hidden = false; }
 function logout() { sessionStorage.removeItem(TOKEN_KEY); produtoEditando = null; mostrarLogin(); document.dispatchEvent(new Event('navoryx:logout')); }
 
@@ -218,6 +219,7 @@ document.querySelector('.admin-tabs').addEventListener('click', event => {
   document.querySelectorAll('.admin-tab').forEach(item => item.setAttribute('aria-selected', String(item === tab)));
   document.querySelectorAll('.admin-panel').forEach(panel => { panel.hidden = panel.dataset.panel !== tab.dataset.tab; });
   if (tab.dataset.tab === 'integrations') carregarIntegracoes();
+  if (tab.dataset.tab === 'finance') carregarResumoFinanceiro();
 });
 
 async function carregarIntegracoes() {
@@ -301,6 +303,7 @@ function renderizarProdutos() {
         <strong>${escapeHtml(produto.name)}</strong>
         <span>${formatarPreco(produto.salePrice || produto.price)}</span>
         <small>SKU: ${escapeHtml(produto.sku || '—')} • Estoque: ${Number(produto.stock || 0)}</small>
+        <small>Custo: ${produto.cost === null || produto.cost === undefined ? 'não informado' : formatarPreco(produto.cost)} • Margem unitária: ${produto.cost === null || produto.cost === undefined ? '—' : formatarPreco((produto.salePrice || produto.price) - produto.cost)}</small>
         <small>${produto.active !== false ? '🟢 Visível na loja' : '🔴 Oculto'}</small>
       </div>
       <div class="admin-product-actions">
@@ -327,7 +330,8 @@ form.addEventListener('submit', async event => {
   if (saveButton.disabled) return;
   const dados = {
     name: fields.name.value.trim(), sku: fields.sku.value.trim(),
-    price: Number(fields.price.value), salePrice: fields.salePrice.value ? Number(fields.salePrice.value) : null,
+    price: Number(fields.price.value), cost: fields.cost.value === '' ? null : Number(fields.cost.value),
+    salePrice: fields.salePrice.value ? Number(fields.salePrice.value) : null,
     stock: Number(fields.stock.value || 0), image: fields.image.value.trim(),
     category: fields.category.value, description: fields.description.value.trim(),
     active: fields.active.checked
@@ -391,3 +395,42 @@ productsContainer.addEventListener('click', async event => {
 cancelEdit.addEventListener('click', resetarFormulario);
 document.getElementById('logoutButton').addEventListener('click', logout);
 verificarSessao();
+
+
+const financeMonth = document.getElementById('financeMonth');
+function mesAtualLocal() {
+  const hoje = new Date();
+  return hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2,'0');
+}
+function prepararResumoFinanceiro() {
+  if (!financeMonth.value) financeMonth.value = mesAtualLocal();
+}
+async function carregarResumoFinanceiro() {
+  prepararResumoFinanceiro();
+  const message = document.getElementById('financeMessage');
+  message.className = 'admin-preview-note';
+  message.textContent = 'Carregando balanço…';
+  try {
+    const resumo = await api('/admin/resumo-vendas?month=' + encodeURIComponent(financeMonth.value), { headers: authHeaders() });
+    const dinheiro = centavos => formatarPreco(Number(centavos || 0) / 100);
+    document.getElementById('financeOrders').textContent = Number(resumo.paid_orders || 0);
+    document.getElementById('financeUnits').textContent = Number(resumo.units_sold || 0);
+    document.getElementById('financeRevenue').textContent = dinheiro(resumo.revenue_total_cents);
+    document.getElementById('financeProductCost').textContent = dinheiro(resumo.product_cost_cents);
+    document.getElementById('financeShippingRevenue').textContent = dinheiro(resumo.shipping_revenue_cents);
+    document.getElementById('financeShippingCost').textContent = dinheiro(resumo.shipping_cost_estimated_cents);
+    document.getElementById('financeMargin').textContent = dinheiro(resumo.operating_margin_estimated_cents);
+    const progresso = Math.max(0, Math.min(100, (Number(resumo.operating_margin_estimated_cents || 0) / 100000) * 100));
+    document.getElementById('financeGoalText').textContent = progresso.toFixed(0) + '%';
+    document.getElementById('financeGoalBar').style.width = progresso + '%';
+    const alertas = [];
+    if (resumo.missing_cost_units) alertas.push(resumo.missing_cost_units + ' unidade(s) vendida(s) sem custo cadastrado');
+    if (resumo.shipping_cost_pending_orders) alertas.push(resumo.shipping_cost_pending_orders + ' pedido(s) com custo de frete ainda estimado');
+    message.textContent = alertas.length ? 'Atenção: ' + alertas.join(' • ') + '.' : 'Balanço atualizado com vendas pagas do mês.';
+    message.className = 'admin-preview-note' + (alertas.length ? ' error' : '');
+  } catch (erro) {
+    message.textContent = erro.message;
+    message.className = 'admin-preview-note error';
+  }
+}
+financeMonth.addEventListener('change', carregarResumoFinanceiro);

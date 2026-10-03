@@ -55,6 +55,7 @@
           <button class="admin-tab" type="button" role="tab" aria-selected="true" aria-controls="productsPanel" data-tab="products"><svg class="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z M4 7.5l8 4.5 8-4.5 M12 12v9"/></svg><span>Produtos e anúncios</span></button>
           <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="sitePanel" data-tab="site"><svg class="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18 M9 9v11"/></svg><span>Aparência da loja</span></button>
           <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="integrationsPanel" data-tab="integrations"><svg class="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 3v5 M16 3v5 M6 8h12v3a6 6 0 0 1-12 0V8Z M12 17v4"/></svg><span>Integrações</span></button>
+          <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="financePanel" data-tab="finance"><svg class="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 19V9 M10 19V5 M16 19v-8 M3 19h18"/><path d="m4 7 5-3 5 4 6-5"/></svg><span>Resumo financeiro</span></button>
           <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="shippingPanel" data-tab="shipping"><svg class="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 5h11v12H3V5Z M14 9h4l3 4v4h-7 M17 9v4h4"/><circle cx="6.5" cy="18" r="2"/><circle cx="17.5" cy="18" r="2"/></svg><span>Pedidos e envios</span></button>
           <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="mlPanel" data-tab="mercadolivre"><svg class="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 10h16v10H4V10Z M3 10l2-6h14l2 6 M9 20v-6h6v6"/></svg><span>Mercado Livre</span></button>
         </nav>
@@ -68,6 +69,7 @@
                 <div class="admin-field"><label for="adminName">Nome *</label><input type="text" id="adminName" required></div>
                 <div class="admin-field"><label for="adminSku">SKU</label><input type="text" id="adminSku"></div>
                 <div class="admin-field"><label for="adminPrice">Preço *</label><input type="number" id="adminPrice" step="0.01" min="0.01" required></div>
+                <div class="admin-field"><label for="adminCost">Custo de compra</label><input type="number" id="adminCost" step="0.01" min="0" placeholder="Ex.: 15,00"><small class="admin-preview-note">Privado. Usado somente para calcular sua margem.</small></div>
                 <div class="admin-field"><label for="adminSalePrice">Preço promocional</label><input type="number" id="adminSalePrice" step="0.01" min="0"></div>
                 <div class="admin-field"><label for="adminStock">Estoque</label><input type="number" id="adminStock" step="1" min="0" value="0"></div>
                 <div class="admin-field"><label for="adminCategory">Categoria *</label><select id="adminCategory" required><option value="">Selecione</option><option value="audio">Áudio</option><option value="smartwatch">Smartwatch</option><option value="cabos">Cabos e Carregadores</option><option value="celular">Celulares e Acessórios</option><option value="outros">Outros</option></select></div>
@@ -90,6 +92,29 @@
             <div id="adminProducts" class="admin-products"><p>Carregando...</p></div>
           </div>
         </div>
+        </section>
+        <section id="financePanel" class="admin-panel" role="tabpanel" data-panel="finance" hidden>
+          <div class="admin-card">
+            <div class="admin-toolbar">
+              <div><span class="eyebrow">DESEMPENHO</span><h2>Resumo financeiro</h2><p>Acompanhe o resultado das vendas confirmadas da loja.</p></div>
+              <div class="admin-field admin-month-field"><label for="financeMonth">Mês</label><input id="financeMonth" type="month"></div>
+            </div>
+            <div class="admin-finance-grid">
+              <div class="admin-stat"><span>Pedidos pagos</span><strong id="financeOrders">0</strong></div>
+              <div class="admin-stat"><span>Unidades vendidas</span><strong id="financeUnits">0</strong></div>
+              <div class="admin-stat"><span>Faturamento</span><strong id="financeRevenue">R$ 0,00</strong></div>
+              <div class="admin-stat"><span>Custo dos produtos</span><strong id="financeProductCost">R$ 0,00</strong></div>
+              <div class="admin-stat"><span>Frete cobrado</span><strong id="financeShippingRevenue">R$ 0,00</strong></div>
+              <div class="admin-stat"><span>Custo de frete</span><strong id="financeShippingCost">R$ 0,00</strong></div>
+              <div class="admin-stat admin-stat-highlight"><span>Margem operacional estimada</span><strong id="financeMargin">R$ 0,00</strong></div>
+            </div>
+            <div class="admin-goal">
+              <div class="admin-toolbar"><strong>Meta mensal: R$ 1.000</strong><span id="financeGoalText">0%</span></div>
+              <div class="admin-goal-track"><div id="financeGoalBar" class="admin-goal-bar"></div></div>
+            </div>
+            <p id="financeMessage" class="admin-preview-note">Carregue um mês para ver o balanço.</p>
+            <p class="admin-preview-note">A margem desconta custo das mercadorias e custo de frete disponível. Tarifas do Mercado Pago, impostos, anúncios e outras despesas ainda não são descontados automaticamente.</p>
+          </div>
         </section>
         <section id="shippingPanel" class="admin-panel" role="tabpanel" data-panel="shipping" hidden>
           <div class="admin-card"><h2>Melhor Envio</h2>
@@ -231,7 +256,7 @@
       </div>
     </section>
   </main>
-  <script src="admin.js?v=20261002-atendimento1"></script>
+  <script src="admin.js?v=20261003-financeiro1"></script>
   <script src="mercadolivre-preenchimento.js?v=20260927-preenchimento2"></script>
   <script src="mercadolivre-admin.js?v=20260928-campos-condicionais"></script>
 <script src="envios-admin.js?v=20261003-pedidos2"></script>
