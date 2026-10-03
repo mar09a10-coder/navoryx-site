@@ -221,6 +221,12 @@ function renderizarProdutosLoja(lista = produtosLoja) {
   }
 
   storeProducts.innerHTML = '';
+  storeProducts.setAttribute('aria-busy', 'false');
+  const catalogStatus = document.getElementById('catalogStatus');
+  if (catalogStatus) {
+    const total = Array.isArray(lista) ? lista.filter(produto => produto.active !== false).length : 0;
+    catalogStatus.textContent = `${total} ${total === 1 ? 'produto disponível' : 'produtos disponíveis'}`;
+  }
 
   if (
     !Array.isArray(lista) ||
@@ -385,6 +391,8 @@ async function carregarProdutos() {
 
       } else {
 
+        storeProducts.setAttribute('aria-busy', 'false');
+
         storeProducts.innerHTML = `
           <p class="no-products">
             Não foi possível carregar os produtos.
@@ -393,6 +401,8 @@ async function carregarProdutos() {
       }
 
     } catch (erroStorage) {
+
+      storeProducts.setAttribute('aria-busy', 'false');
 
       storeProducts.innerHTML = `
         <p class="no-products">
@@ -564,6 +574,13 @@ categoryCards.forEach(card => {
     );
     renderizarProdutosLoja(matches);
   });
+});
+
+// Retorna ao catálogo completo após buscar ou selecionar uma categoria.
+document.getElementById('showAllProducts')?.addEventListener('click', () => {
+  if (searchInput) searchInput.value = '';
+  categoryCards.forEach(card => card.removeAttribute('aria-current'));
+  renderizarProdutosLoja(produtosLoja);
 });
 
 // ==========================================
@@ -1863,4 +1880,3 @@ window.addEventListener('pageshow', function(event) {
     mostrarStatusCompra('Confira o status no Mercado Pago antes de iniciar outro pagamento.');
   }
 });
-
