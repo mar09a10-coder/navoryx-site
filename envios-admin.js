@@ -83,8 +83,8 @@
     const card=button.closest('[data-order]'),id=card.dataset.order,action=button.dataset.action;
     const order=orders.find(o=>o.id===id);const body={};
     if(action==='cancel') {
-      if(!window.confirm('Cancelar este pedido ainda não pago? O link de compra será encerrado e eventuais pagamentos pendentes serão cancelados.'))return;
       body.confirmed=true;
+      button.textContent='Cancelando…';
     }
     if(action==='prepare'){body.invoice=card.querySelector('[data-invoice]').value.trim();if(!/^\d{44}$/.test(body.invoice)){orderMessage.textContent='Informe a chave da NF-e com 44 números.';return;}}
     if(action==='recover')body.labelId=card.querySelector('[data-recover]').value.trim();
@@ -93,18 +93,19 @@
       body.confirmedCents=order.pending_cost_cents;
     }
     busy=true;filter.disabled=true;list.querySelectorAll('button').forEach(b=>b.disabled=true);const generation=sessionGeneration;
-    orderMessage.textContent=action==='prepare'?'Preparando os pacotes…': 'Processando. Aguarde a confirmação…';
+    orderMessage.textContent=action==='prepare'?'Preparando os pacotes…':action==='cancel'?'Cancelando pedido e liberando a reserva de estoque…':'Processando. Aguarde a confirmação…';
     let result;
     try{
       do{
         result=await shippingApi('/admin/pedidos/'+id+'/'+action,{method:'POST',body:JSON.stringify(body)});
         if(generation!==sessionGeneration)return;
-        orderMessage.textContent=action==='prepare'?`${result.labels.length}/${result.package_count} pacotes preparados…`:'Operação confirmada.';
+        orderMessage.textContent=action==='prepare'?`${result.labels.length}/${result.package_count} pacotes preparados…`:action==='cancel'?(result.cancellation_pending?'Cancelamento solicitado. Tentando concluir automaticamente…':'Pedido cancelado. Reserva de estoque liberada.'):'Operação confirmada.';
       }while(action==='prepare' && result.labels.length<result.package_count);
       orders=orders.map(o=>o.id===id?result:o);render();
       if(result.url){const link=document.createElement('a');link.href=result.url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Abrir etiquetas para imprimir';link.className='admin-secondary';orderMessage.replaceChildren(link);}
+      else if(action==='cancel') orderMessage.textContent=result.cancellation_pending?'Cancelamento solicitado. O sistema continuará tentando concluir automaticamente.':'Pedido cancelado. A reserva de estoque foi liberada.';
       else orderMessage.textContent=action==='generate'?'Etiquetas geradas. Imprima, cole em cada pacote e leve à agência dos Correios.':'Pedido atualizado.';
-    }catch(e){orderMessage.textContent=e.message+' Atualize a lista para conferir o resultado.';render();}
+    }catch(e){orderMessage.textContent=(action==='cancel'?'Não foi possível confirmar o cancelamento agora. Tente novamente em alguns instantes. ':'')+e.message;render();}
     finally{busy=false;filter.disabled=false;if(result && action==='cancel')loadOrders();}
   });
   document.getElementById('refreshOrders').addEventListener('click',loadOrders);
