@@ -276,7 +276,7 @@ function renderizarProdutosLoja(lista = produtosLoja) {
 
       <a
         href="produto.html?id=${encodeURIComponent(produto.id)}"
-        class="product-link"
+        class="product-media-link"
       >
 
         <img
@@ -285,11 +285,12 @@ function renderizarProdutosLoja(lista = produtosLoja) {
           class="product-image" loading="lazy" decoding="async"
         >
 
-        <h3>
-          ${nomeProduto}
-        </h3>
-
       </a>
+
+      <div class="product-card-content">
+        <a href="produto.html?id=${encodeURIComponent(produto.id)}" class="product-link">
+          <h3>${nomeProduto}</h3>
+        </a>
 
       <p>
         ${descricaoProduto}
@@ -309,6 +310,7 @@ function renderizarProdutosLoja(lista = produtosLoja) {
       >
         Adicionar ao Carrinho
       </button>
+      </div>
 
     `;
 
