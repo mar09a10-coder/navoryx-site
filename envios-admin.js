@@ -45,6 +45,7 @@
         <div class="admin-toolbar"><h3>Pedido ${escapeHtml(order.id.slice(0,8).toUpperCase())}</h3><strong>${escapeHtml(order.order_status==='expired'?'Pedido expirado':order.order_status==='cancelled'?'Pedido cancelado':statuses[order.payment_status]||order.payment_status)}</strong></div>
         ${order.cancellation_pending?'<p class="admin-message">Cancelamento solicitado; aguardando confirmação. Confira o pagamento para atualizar.</p>':''}
         ${order.late_payment?'<p class="admin-message error">Pagamento confirmado após o encerramento da tentativa. Confira este pedido antes de enviar.</p>':''}
+        ${order.is_test_order?'<p class="admin-message">🧪 Pedido teste — não entra no resumo financeiro.</p>':''}
         <p>${escapeHtml(new Date(order.created_at).toLocaleString('pt-BR'))} · ${escapeHtml(c.nome)}</p>
         <p>${order.items.map(i=>`${i.quantity} × ${escapeHtml(i.title)}`).join('<br>')}</p>
         <p>${escapeHtml(c.endereco)}, ${escapeHtml(c.numero)} ${escapeHtml(c.complemento)}<br>${escapeHtml(c.bairro)} · ${escapeHtml(c.cidade)}/${escapeHtml(c.estado)} · CEP ${escapeHtml(c.cep)}</p>
@@ -56,6 +57,7 @@
         ${order.purchase_uncertain?'<p class="admin-message error">A compra de frete aguarda confirmação. Confira a carteira no Melhor Envio e atualize este pedido.</p>':''}
         <div class="admin-actions">
           <button class="admin-secondary" data-action="refresh" type="button">Conferir pagamento e rastreio</button>
+          <button class="admin-secondary" data-action="test" type="button">${order.is_test_order?'Contar no financeiro':'Marcar como pedido teste'}</button>
           ${order.can_cancel?'<button class="admin-secondary" data-action="cancel" type="button">'+(order.cancellation_pending?'Concluir cancelamento':'Cancelar pedido sem pagamento')+'</button>':''}
           ${approved && count<order.package_count && order.shipment_status!=='cart_uncertain'?'<button class="product-buy-button" data-action="prepare" type="button">Preparar envio</button>':''}
           ${approved && order.shipment_status==='cart_uncertain'?'<button class="admin-secondary" data-action="recover" type="button">Vincular etiqueta existente</button>':''}
@@ -82,6 +84,10 @@
     const button=event.target.closest('[data-action]');if(!button || busy)return;
     const card=button.closest('[data-order]'),id=card.dataset.order,action=button.dataset.action;
     const order=orders.find(o=>o.id===id);const body={};
+    if(action==='test') {
+      body.isTest=!order.is_test_order;
+      button.textContent=body.isTest?'Marcando…':'Atualizando…';
+    }
     if(action==='cancel') {
       body.confirmed=true;
       button.textContent='Cancelando…';
@@ -93,7 +99,7 @@
       body.confirmedCents=order.pending_cost_cents;
     }
     busy=true;filter.disabled=true;list.querySelectorAll('button').forEach(b=>b.disabled=true);const generation=sessionGeneration;
-    orderMessage.textContent=action==='prepare'?'Preparando os pacotes…':action==='cancel'?'Cancelando pedido e liberando a reserva de estoque…':'Processando. Aguarde a confirmação…';
+    orderMessage.textContent=action==='prepare'?'Preparando os pacotes…':action==='cancel'?'Cancelando pedido e liberando a reserva de estoque…':action==='test'?(body.isTest?'Marcando pedido como teste…':'Voltando a contar o pedido no financeiro…'):'Processando. Aguarde a confirmação…';
     let result;
     try{
       do{
@@ -104,6 +110,7 @@
       orders=orders.map(o=>o.id===id?result:o);render();
       if(result.url){const link=document.createElement('a');link.href=result.url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Abrir etiquetas para imprimir';link.className='admin-secondary';orderMessage.replaceChildren(link);}
       else if(action==='cancel') orderMessage.textContent=result.cancellation_pending?'Cancelamento solicitado. O sistema continuará tentando concluir automaticamente.':'Pedido cancelado. A reserva de estoque foi liberada.';
+      else if(action==='test') orderMessage.textContent=result.is_test_order?'Pedido marcado como teste. Ele não entra mais no resumo financeiro.':'Pedido voltou a contar no resumo financeiro.';
       else orderMessage.textContent=action==='generate'?'Etiquetas geradas. Imprima, cole em cada pacote e leve à agência dos Correios.':'Pedido atualizado.';
     }catch(e){orderMessage.textContent=(action==='cancel'?'Não foi possível confirmar o cancelamento agora. Tente novamente em alguns instantes. ':'')+e.message;render();}
     finally{busy=false;filter.disabled=false;if(result && action==='cancel')loadOrders();}
