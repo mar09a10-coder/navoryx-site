@@ -1,0 +1,139 @@
+/* Identidade visual do painel Navoryx. Escopo exclusivo da administração. */
+.admin-body { background: #080d15; color: #e9f0f9; }
+.admin-body [hidden] { display: none !important; }
+.admin-body .container { width: min(1320px, calc(100% - 64px)); }
+.admin-body .topbar { color: #92a3b9; font-size: 11px; padding: 8px 16px; }
+.admin-body .header { background: #05070b; box-shadow: none; border-color: #1b2738; }
+.admin-body .header-inner { grid-template-areas: "search brand cart"; padding: 8px 0; gap: 20px; }
+.admin-body .brand { width: 148px; height: 70px; }
+.admin-body .logo-navoryx { width: 200px; height: 80px; }
+.admin-header-label { grid-area: search; color: #8196b0; font-size: 11px; font-weight: 600; letter-spacing: .7px; }
+.admin-body .cart-button { min-height: 42px; font-size: 12px; padding: 10px 15px; border-radius: 10px; }
+.admin-body .eyebrow { display: block; color: #67c5ff; font-size: 10px; font-weight: 700; letter-spacing: 1.9px; }
+.admin-body .admin-section { padding: 34px 0 64px; }
+.admin-shell { display: grid; grid-template-columns: 208px minmax(0, 1fr); grid-template-areas: "intro intro" "nav panel"; align-items: start; gap: 28px 24px; }
+.admin-body .admin-header { grid-area: intro; padding-bottom: 25px; margin: 0; border-bottom: 1px solid #1c2a3c; }
+.admin-body .admin-header h1 { font-size: 32px; font-weight: 750; letter-spacing: -.04em; line-height: 1.3; margin: 8px 0 9px; }
+.admin-body .admin-header p { color: #a1b2c8; font-size: 13px; line-height: 1.7; }
+.admin-body .admin-tabs { grid-area: nav; display: flex; flex-direction: column; flex-wrap: nowrap; gap: 6px; margin: 0; position: sticky; top: 112px; padding: 6px; border: 1px solid #1d2b3f; border-radius: 15px; background: #0d1522; }
+.admin-body .admin-tabs::before { content: "GERENCIAR"; color: #8296b1; font-size: 9px; font-weight: 700; letter-spacing: 1.7px; padding: 16px 12px 12px; }
+.admin-body .admin-tab { display: flex; align-items: center; gap: 11px; text-align: left; width: 100%; min-height: 48px; padding: 12px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: #aebed2; font-size: 12px; font-weight: 550; line-height: 1.5; }
+.admin-body .admin-tab:hover { background: #141f30; color: #f2f7ff; }
+.admin-body .admin-tab[aria-selected="true"] { background: #102b45; border-color: #245176; color: #90d1ff; box-shadow: inset 3px 0 #35aeff; }
+.admin-nav-icon { width: 19px; height: 19px; flex-shrink: 0; }
+.admin-body .admin-panel { grid-area: panel; min-width: 0; }
+.admin-body .admin-card { padding: 25px; background: #0e1724; border: 1px solid #233248; border-radius: 16px; box-shadow: none; min-width: 0; }
+.admin-body .admin-panel > .admin-card + .admin-card { margin-top: 22px; }
+.admin-body .admin-card h2 { font-size: 20px; font-weight: 700; letter-spacing: -.025em; line-height: 1.4; margin: 0 0 18px; }
+.admin-body .admin-toolbar h2 { margin-bottom: 0; }
+.admin-body .admin-toolbar { gap: 14px; margin-bottom: 22px; }
+.admin-body .admin-header.admin-toolbar { margin-bottom: 0; }
+.admin-body .admin-card > p { color: #a8b9cd; font-size: 13px; line-height: 1.8; }
+.admin-body .admin-dashboard { display: grid; grid-template-columns: minmax(0, 1fr) 285px; gap: 20px; align-items: start; }
+.admin-body .admin-dashboard > .admin-stat { grid-column: 1 / -1; display: flex; align-items: center; gap: 20px; justify-content: space-between; padding: 15px 22px; margin: 0; border-radius: 13px; background: #101e30; }
+.admin-body .admin-stat { padding: 20px; margin: 14px 0; border: 1px solid #24415e; background: #101e30; border-radius: 12px; box-shadow: none; }
+.admin-body .admin-stat span { color: #b2c3d9; font-size: 12px; margin: 0 0 7px; }
+.admin-body .admin-stat strong { color: #81cfff; font-size: 19px; font-weight: 650; line-height: 1.5; overflow-wrap: anywhere; }
+.admin-body .admin-dashboard > .admin-stat span { margin: 0; }
+.admin-body #adminProductCount { font-size: 27px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.admin-body .admin-products-card { position: sticky; top: 112px; padding: 20px; }
+.admin-body .admin-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 19px 16px; margin-bottom: 22px; }
+.admin-body .admin-field { gap: 9px; min-width: 0; }
+.admin-body .admin-field label { color: #c9d6e7; font-size: 12px; font-weight: 600; line-height: 1.5; }
+.admin-body .admin-field input, .admin-body .admin-field select, .admin-body .admin-field textarea { background: #0a111c; color: #ecf3fc; border: 1px solid #293b53; border-radius: 9px; padding: 12px 13px; font-size: 14px; min-width: 0; min-height: 44px; line-height: 1.5; }
+.admin-body .admin-field input::placeholder, .admin-body .admin-field textarea::placeholder { color: #7288a5; }
+.admin-body .admin-field textarea { min-height: 98px; }
+.admin-body .admin-field input:focus, .admin-body .admin-field select:focus, .admin-body .admin-field textarea:focus { border-color: #4cb7ff; box-shadow: 0 0 0 3px #35aeff18; }
+.admin-body .admin-field input[type="checkbox"] { min-height: 0; accent-color: #0073d7; vertical-align: middle; }
+.admin-body .admin-color-field input[type="color"] { min-height: 44px; width: 48px; padding: 4px; }
+.admin-body .admin-color-field > input:not([type="color"]) { flex: 1; width: 0; }
+.admin-body .admin-subheading { color: #dce8f7; font-size: 14px; font-weight: 650; margin: 16px 0 0; padding-top: 22px; border-top: 1px solid #243248; }
+.admin-body .admin-preview-note { color: #94a9c3; font-size: 12px; line-height: 1.8; margin: 0 0 14px; }
+.admin-body .admin-preview-note.error { color: #fca5a5; }
+.admin-body .admin-message { color: #8ccfff; font-size: 12px; line-height: 1.8; overflow-wrap: anywhere; }
+.admin-body .admin-message:empty { min-height: 0; margin: 0; }
+.admin-body .admin-message.error { color: #fca5a5; }
+.admin-body .admin-secondary, .admin-body .admin-product-actions button { color: #d7e4f4; background: #142236; border: 1px solid #2c415c; border-radius: 9px; font-size: 12px; font-weight: 600; min-height: 42px; padding: 10px 14px; transition: background .15s ease, border-color .15s ease; }
+.admin-body .admin-secondary:hover, .admin-body .admin-product-actions button:hover { color: #fff; background: #1b304a; border-color: #4276a2; }
+.admin-body .product-buy-button { background: #0073d7; border: 1px solid #1887e6; font-size: 13px; font-weight: 650; min-height: 46px; border-radius: 9px; box-shadow: none; }
+.admin-body .product-buy-button:hover { background: #0866b9; box-shadow: none; }
+.admin-body .admin-card .product-buy-button { min-width: 0; padding: 12px 19px; }
+.admin-body button:disabled { opacity: .5; cursor: default; }
+.admin-body button:focus-visible, .admin-body a:focus-visible, .admin-body summary:focus-visible { outline: 2px solid #8ed0ff; outline-offset: 4px; }
+.admin-body .admin-list-header { margin: 0 0 18px; }
+.admin-body .admin-list-header h2 { margin-bottom: 7px; }
+.admin-body .admin-list-header p { color: #91a6c0; font-size: 11px; line-height: 1.8; }
+.admin-body .admin-product-item { display: flex; flex-direction: column; align-items: stretch; gap: 15px; padding: 15px; background: #0a111c; border: 1px solid #24364d; border-radius: 12px; }
+.admin-body .admin-product-item:hover { transform: none; border-color: #3c668d; }
+.admin-body .admin-product-image { width: 100%; height: 142px; border-radius: 9px; }
+.admin-body .admin-product-image img { padding: 12px; box-sizing: border-box; }
+.admin-body .admin-product-info { gap: 8px; min-width: 0; }
+.admin-body .admin-product-info strong { font-size: 13px; font-weight: 600; line-height: 1.7; overflow-wrap: anywhere; }
+.admin-body .admin-product-info span { font-size: 22px; font-weight: 650; color: #81cfff; font-variant-numeric: tabular-nums; }
+.admin-body .admin-product-info small { font-size: 10px; line-height: 1.7; margin: 0; }
+.admin-body .admin-product-actions { justify-content: flex-start; gap: 7px; padding-top: 5px; }
+.admin-body .admin-product-actions button { padding: 9px 10px; min-height: 38px; font-size: 11px; flex: 1; }
+.admin-body .admin-product-actions button[data-action="edit"] { background: #0d3d65; border-color: #2d6794; color: #afddff; }
+.admin-body .admin-product-actions button[data-action="delete"] { color: #f1b3b3; border-color: #563945; background: #211824; }
+.admin-body .admin-product-actions button[data-action="delete"]:hover { background: #462232; }
+.admin-body .shipping-order { background: #0a111c; border-color: #2a3c54; margin: 16px 0; }
+.admin-body .shipping-order .admin-toolbar { padding-bottom: 14px; border-bottom: 1px solid #243248; margin-bottom: 16px; }
+.admin-body .shipping-order .admin-toolbar h3 { font-size: 16px; letter-spacing: -.02em; margin: 0; }
+.admin-body .shipping-order .admin-toolbar > strong { color: #8dd1ff; background: #122b45; padding: 6px 10px; border-radius: 7px; font-size: 11px; font-weight: 600; }
+.admin-body .shipping-order p { font-size: 12px; line-height: 1.9; color: #acbed6; overflow-wrap: anywhere; }
+.admin-body #ordersFilter { max-width: 400px; }
+.admin-body #ordersCounts { border: 1px solid #29415e; border-radius: 9px; padding: 11px 14px; background: #101e30; margin: 16px 0; }
+.admin-body .admin-orders-card > .admin-actions:last-child { padding-top: 20px; border-top: 1px solid #243248; }
+.admin-body #ordersPage { font-size: 12px; color: #a8bdd6; }
+.admin-body .admin-preview { border-color: #2a415d; border-radius: 12px; }
+.admin-body .admin-preview-banner h3 { font-size: 24px; line-height: 1.3; letter-spacing: -.025em; }
+.admin-body #mlPanel .admin-card { margin-bottom: 0; }
+.admin-body #mlPanel .admin-form-grid { gap: 19px 16px; }
+.admin-body .ml-assistant { background: #10233a; border-color: #2b5c85; border-radius: 12px; }
+.admin-body .admin-login { width: min(430px, calc(100% - 32px)); box-sizing: border-box; margin: 64px auto; padding: 34px; }
+.admin-body .admin-login h1 { font-size: 29px; letter-spacing: -.035em; margin: 12px 0; }
+.admin-body .admin-login > p { font-size: 13px; line-height: 1.8; margin-bottom: 28px; }
+.admin-body .admin-login .product-buy-button { width: 100%; margin-top: 18px; }
+@media (max-width: 1199px) {
+  .admin-shell { grid-template-columns: 190px minmax(0, 1fr); gap: 24px 20px; }
+  .admin-body .admin-dashboard { grid-template-columns: minmax(0, 1fr); }
+  .admin-body .admin-products-card { position: static; }
+  .admin-body .admin-product-item { display: grid; grid-template-columns: 92px minmax(0,1fr); align-items: center; }
+  .admin-body .admin-product-image { width: 92px; height: 92px; }
+  .admin-body .admin-product-actions { grid-column: 1/-1; max-width: 300px; }
+}
+@media (max-width: 900px) {
+  .admin-body .container { width: calc(100% - 32px); }
+  .admin-shell { grid-template-columns: minmax(0,1fr); grid-template-areas: "intro" "nav" "panel"; gap: 22px; }
+  .admin-body .admin-tabs { position: static; flex-direction: row; flex-wrap: wrap; padding: 7px; gap: 5px; }
+  .admin-body .admin-tabs::before { display: none; }
+  .admin-body .admin-tab { width: auto; flex: 1 1 145px; min-height: 44px; padding: 10px; font-size: 11px; }
+  .admin-body .admin-tab[aria-selected="true"] { box-shadow: none; }
+  .admin-body .admin-card { padding: 22px; }
+  .admin-body .admin-header h1 { font-size: 28px; }
+  .admin-body .admin-header-label { font-size: 10px; letter-spacing: 0; }
+  .admin-body .admin-field-full { grid-column: 1/-1; }
+}
+@media (max-width: 560px) {
+  .admin-body .admin-section { padding-top: 24px; }
+  .admin-body .header-inner { grid-template-areas: ". brand cart"; gap: 0; }
+  .admin-header-label { display: none; }
+  .admin-body .brand { width: 126px; height: 62px; }
+  .admin-body .logo-navoryx { width: 172px; height: 69px; }
+  .admin-body .cart-button { font-size: 10px; padding: 8px; min-height: 40px; }
+  .admin-body .admin-header { align-items: flex-start; flex-wrap: nowrap; gap: 18px; padding-bottom: 22px; }
+  .admin-body .admin-header h1 { font-size: 25px; }
+  .admin-body .admin-header p { font-size: 12px; }
+  .admin-body .admin-tab { flex-basis: calc(50% - 10px); }
+  .admin-body .admin-card { padding: 20px; border-radius: 13px; }
+  .admin-body .admin-form-grid, .admin-body #mlPanel .admin-form-grid { grid-template-columns: minmax(0,1fr); gap: 18px; }
+  .admin-body .admin-field input, .admin-body .admin-field select, .admin-body .admin-field textarea { font-size: 16px; }
+  .admin-body .admin-card h2 { font-size: 19px; }
+  .admin-body .admin-dashboard > .admin-stat { padding: 14px 18px; }
+  .admin-body .admin-card .product-buy-button { width: 100%; }
+  .admin-body .admin-actions > button, .admin-body .admin-actions > a { flex: 1 1 140px; text-align: center; }
+  .admin-body .admin-login { margin: 36px auto; padding: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-body *, .admin-body *::before, .admin-body *::after { transition: none !important; scroll-behavior: auto !important; }
+}

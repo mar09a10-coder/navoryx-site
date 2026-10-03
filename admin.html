@@ -18,12 +18,14 @@
     .admin-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 24px}.admin-tab{border:1px solid #334155;background:#111827;color:#cbd5e1;padding:11px 16px;border-radius:9px;cursor:pointer}.admin-tab[aria-selected="true"]{background:#2563eb;border-color:#2563eb;color:#fff}.admin-panel[hidden]{display:none}.admin-preview{border:1px solid #334155;border-radius:14px;overflow:hidden;background:#0f172a;margin-top:18px}.admin-preview-banner{min-height:145px;padding:22px;display:flex;align-items:center;background:linear-gradient(110deg,#111827,#2563eb);background-size:cover;background-position:center}.admin-preview-banner h3{max-width:430px;margin:0;color:white;font-size:22px}.admin-preview-bar{padding:10px 16px;color:white;font-size:13px}.admin-preview-note{color:#94a3b8;font-size:13px}.admin-preview-note.error{color:#fca5a5}.admin-field-full{grid-column:1/-1}.admin-subheading{margin:24px 0 8px;color:#e2e8f0}.admin-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.admin-color-field{display:flex;gap:9px;align-items:center}.admin-color-field input[type="color"]{width:48px;height:42px;padding:3px}
     @media(max-width:640px){.admin-tabs{display:grid;grid-template-columns:1fr 1fr}.admin-tab{width:100%}}
   </style>
+  <link rel="stylesheet" href="admin-modern.css?v=20261003-painel1">
 </head>
 <body class="admin-body">
   <div class="topbar">Painel Administrativo • Navoryx</div>
   <header class="header">
     <div class="container header-inner">
-      <a href="index.html" class="brand"><img src="img/logo.png" alt="Navoryx" class="logo-navoryx"></a>
+      <span class="admin-header-label">Área administrativa</span>
+      <a href="index.html" class="brand"><img src="img/logo-small.webp" alt="Navoryx" class="logo-navoryx"></a>
       <a href="index.html" class="cart-button">← Ver loja</a>
     </div>
   </header>
@@ -44,22 +46,22 @@
     </section>
 
     <section id="adminApp" class="admin-section admin-app" hidden>
-      <div class="container">
+      <div class="container admin-shell">
         <div class="admin-header admin-toolbar">
           <div><span class="eyebrow">CENTRAL DE CONTROLE</span><h1>Painel Navoryx</h1><p>Gerencie produtos e personalize as informações principais da loja.</p></div>
           <button id="logoutButton" class="admin-secondary" type="button">Sair</button>
         </div>
         <nav class="admin-tabs" role="tablist" aria-label="Seções do painel">
-          <button class="admin-tab" type="button" role="tab" aria-selected="true" aria-controls="productsPanel" data-tab="products">Produtos e anúncios</button>
-          <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="sitePanel" data-tab="site">Aparência da loja</button>
-          <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="integrationsPanel" data-tab="integrations">Integrações</button>
-          <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="shippingPanel" data-tab="shipping">Pedidos e envios</button>
-          <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="mlPanel" data-tab="mercadolivre">Mercado Livre</button>
+          <button class="admin-tab" type="button" role="tab" aria-selected="true" aria-controls="productsPanel" data-tab="products"><svg class="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z M4 7.5l8 4.5 8-4.5 M12 12v9"/></svg><span>Produtos e anúncios</span></button>
+          <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="sitePanel" data-tab="site"><svg class="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18 M9 9v11"/></svg><span>Aparência da loja</span></button>
+          <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="integrationsPanel" data-tab="integrations"><svg class="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 3v5 M16 3v5 M6 8h12v3a6 6 0 0 1-12 0V8Z M12 17v4"/></svg><span>Integrações</span></button>
+          <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="shippingPanel" data-tab="shipping"><svg class="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 5h11v12H3V5Z M14 9h4l3 4v4h-7 M17 9v4h4"/><circle cx="6.5" cy="18" r="2"/><circle cx="17.5" cy="18" r="2"/></svg><span>Pedidos e envios</span></button>
+          <button class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="mlPanel" data-tab="mercadolivre"><svg class="admin-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 10h16v10H4V10Z M3 10l2-6h14l2 6 M9 20v-6h6v6"/></svg><span>Mercado Livre</span></button>
         </nav>
         <section id="productsPanel" class="admin-panel" role="tabpanel" data-panel="products">
         <div class="admin-dashboard">
           <div class="admin-stat"><span>Produtos cadastrados</span><strong id="adminProductCount">0</strong></div>
-          <div class="admin-card">
+          <div class="admin-card admin-product-form-card">
             <div class="admin-toolbar"><h2 id="formTitle">Cadastrar produto</h2><button id="cancelEdit" class="admin-secondary" type="button" hidden>Cancelar edição</button></div>
             <form id="adminProductForm">
               <div class="admin-form-grid">
@@ -83,7 +85,7 @@
               <button id="saveButton" type="submit" class="product-buy-button">+ Cadastrar produto</button>
             </form>
           </div>
-          <div class="admin-card">
+          <div class="admin-card admin-products-card">
             <div class="admin-list-header"><div><h2>Produtos</h2><p>Alterações salvas aparecem automaticamente na loja.</p></div></div>
             <div id="adminProducts" class="admin-products"><p>Carregando...</p></div>
           </div>
@@ -112,12 +114,14 @@
               <button type="submit" class="product-buy-button">Conectar e salvar remetente</button>
             </form>
           </div>
+          <div class="admin-card admin-orders-card">
           <div class="admin-toolbar"><h2>Pedidos da loja</h2><button id="refreshOrders" class="admin-secondary" type="button">Atualizar lista</button></div>
           <div class="admin-field"><label for="ordersFilter">Mostrar pedidos</label><select id="ordersFilter"><option value="paid">Pagos</option><option value="waiting">Aguardando pagamento / em análise</option><option value="closed">Cancelados / expirados / recusados</option><option value="all">Todos os pedidos</option></select></div>
           <p id="ordersCounts" class="admin-message"></p>
           <p id="shippingOrdersMessage" class="admin-message" role="status" aria-live="polite"></p>
           <div id="shippingOrders"></div>
           <div class="admin-actions"><button id="ordersPrevious" class="admin-secondary" type="button" disabled>Anterior</button><span id="ordersPage">Página 1</span><button id="ordersNext" class="admin-secondary" type="button" disabled>Próxima</button></div>
+          </div>
         </section>
         <section id="sitePanel" class="admin-panel" role="tabpanel" data-panel="site" hidden>
           <div class="admin-card">
