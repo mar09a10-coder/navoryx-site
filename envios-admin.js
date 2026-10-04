@@ -36,6 +36,13 @@
       carregarOrigemFrete();await loadConfig();
     }catch(e){message.textContent=e.message;message.className='admin-message error';}finally{button.disabled=false;}
   });
+  function abrirEtiqueta(url) {
+    const link=document.createElement('a');
+    link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Abrir etiqueta para imprimir';link.className='admin-secondary';
+    const opened=window.open(url,'_blank','noopener,noreferrer');
+    orderMessage.replaceChildren(link);
+    if(!opened)orderMessage.prepend(document.createTextNode('O navegador bloqueou a abertura automática. '));
+  }
   function render() {
     list.innerHTML=orders.length?orders.map(order=>{
       const c=order.customer,approved=order.payment_status==='approved',count=order.labels.length;
@@ -63,7 +70,7 @@
           ${approved && order.shipment_status==='cart_uncertain'?'<button class="admin-secondary" data-action="recover" type="button">Vincular etiqueta existente</button>':''}
           ${approved && count===order.package_count && pending && !order.purchase_uncertain?`<button class="product-buy-button" data-action="buy" type="button">Comprar frete · ${formatarPreco(order.pending_cost_cents/100)}</button>`:''}
           ${approved && count===order.package_count && paid && !pending?'<button class="product-buy-button" data-action="generate" type="button">Gerar etiquetas</button>':''}
-          ${approved && generated?'<button class="product-buy-button" data-action="print" type="button">Imprimir etiquetas</button>':''}
+          ${approved && generated?'<button class="product-buy-button" data-action="print" type="button">Abrir etiqueta para imprimir</button>':''}
           <a class="admin-secondary" href="https://melhorenvio.com.br" target="_blank" rel="noopener noreferrer">Abrir Melhor Envio</a>
         </div>
       </article>`;
@@ -102,8 +109,9 @@
       if(!window.confirm(`Comprar as etiquetas por ${formatarPreco(order.pending_cost_cents/100)} usando o saldo da carteira do Melhor Envio?`))return;
       body.confirmedCents=order.pending_cost_cents;
     }
+    if(action==='print')button.textContent='Abrindo etiqueta...';
     busy=true;filter.disabled=true;list.querySelectorAll('button').forEach(b=>b.disabled=true);const generation=sessionGeneration;
-    orderMessage.textContent=action==='prepare'?'Preparando os pacotes…':action==='cancel'?'Cancelando pedido e liberando a reserva de estoque…':action==='test'?(body.isTest?'Marcando pedido como teste…':'Voltando a contar o pedido no financeiro…'):'Processando. Aguarde a confirmação…';
+    orderMessage.textContent=action==='prepare'?'Preparando os pacotes…':action==='print'?'Abrindo a etiqueta para impressão…':action==='cancel'?'Cancelando pedido e liberando a reserva de estoque…':action==='test'?(body.isTest?'Marcando pedido como teste…':'Voltando a contar o pedido no financeiro…'):'Processando. Aguarde a confirmação…';
     let result;
     try{
       do{
@@ -112,10 +120,10 @@
         orderMessage.textContent=action==='prepare'?`${result.labels.length}/${result.package_count} pacotes preparados…`:action==='cancel'?(result.cancellation_pending?'Cancelamento solicitado. Tentando concluir automaticamente…':'Pedido cancelado. Reserva de estoque liberada.'):'Operação confirmada.';
       }while(action==='prepare' && result.labels.length<result.package_count);
       orders=orders.map(o=>o.id===id?result:o);render();
-      if(result.url){const link=document.createElement('a');link.href=result.url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Abrir etiquetas para imprimir';link.className='admin-secondary';orderMessage.replaceChildren(link);}
+      if(result.url){abrirEtiqueta(result.url);}
       else if(action==='cancel') orderMessage.textContent=result.cancellation_pending?'Cancelamento solicitado. O sistema continuará tentando concluir automaticamente.':'Pedido cancelado. A reserva de estoque foi liberada.';
       else if(action==='test') orderMessage.textContent=result.is_test_order?'Pedido marcado como teste. Ele não entra mais no resumo financeiro.':'Pedido voltou a contar no resumo financeiro.';
-      else orderMessage.textContent=action==='generate'?'Etiquetas geradas. Imprima, cole em cada pacote e leve à agência dos Correios.':'Pedido atualizado.';
+      else orderMessage.textContent=action==='generate'?'Etiquetas geradas. Agora clique em Abrir etiqueta para imprimir.':'Pedido atualizado.';
     }catch(e){orderMessage.textContent=(action==='cancel'?'Não foi possível confirmar o cancelamento agora. Tente novamente em alguns instantes. ':'')+e.message;render();}
     finally{busy=false;filter.disabled=false;if(result && action==='cancel')loadOrders();}
   });
