@@ -52,7 +52,7 @@
         <p>${escapeHtml(order.shipping_method)} · Frete pago pelo cliente: <strong>${formatarPreco(order.shipping_price)}</strong> · Total: <strong>${formatarPreco(order.total)}</strong></p>
         <p>${count}/${order.package_count} pacote(s) preparado(s). Embale cada unidade separadamente, como cadastrado no produto.</p>
         ${order.labels.map((l,i)=>`<p>Pacote ${i+1}: ${escapeHtml(statuses[l.status]||l.status)} ${l.tracking?`· Rastreio: <strong>${escapeHtml(l.tracking)}</strong>`:''} ${l.protocol?`· Protocolo: ${escapeHtml(l.protocol)}`:''}<br><small>ID: ${escapeHtml(l.id)}</small></p>`).join('')}
-        ${count<order.package_count?`<div class="admin-field"><label>Chave da NF-e (44 números)<input data-invoice value="${escapeHtml(order.invoice)}" inputmode="numeric" maxlength="44" ${count?'readonly':''}></label></div>`:''}
+        ${count<order.package_count?`<div class="admin-field"><label>Chave da NF-e, se tiver<input data-invoice value="${escapeHtml(order.invoice)}" inputmode="numeric" maxlength="44" placeholder="Deixe em branco para declaração" ${count?'readonly':''}></label><small class="admin-preview-note">Use NF-e quando houver obrigação fiscal. Sem chave, o envio será preparado como declaração de conteúdo.</small></div>`:''}
         ${order.shipment_status==='cart_uncertain'?`<p class="admin-message error">Confira o carrinho no Melhor Envio. A criação ficou sem confirmação; vincule a etiqueta existente para continuar.</p><div class="admin-field"><label>ID da etiqueta existente<input data-recover placeholder="ID da etiqueta no Melhor Envio"></label></div>`:''}
         ${order.purchase_uncertain?'<p class="admin-message error">A compra de frete aguarda confirmação. Confira a carteira no Melhor Envio e atualize este pedido.</p>':''}
         <div class="admin-actions">
@@ -92,7 +92,10 @@
       body.confirmed=true;
       button.textContent='Cancelando…';
     }
-    if(action==='prepare'){body.invoice=card.querySelector('[data-invoice]').value.trim();if(!/^\d{44}$/.test(body.invoice)){orderMessage.textContent='Informe a chave da NF-e com 44 números.';return;}}
+    if(action==='prepare'){
+      body.invoice=card.querySelector('[data-invoice]').value.replace(/\D/g,'');
+      if(body.invoice && !/^\d{44}$/.test(body.invoice)){orderMessage.textContent='A chave da NF-e precisa ter 44 números. Para declaração, deixe o campo em branco.';return;}
+    }
     if(action==='recover')body.labelId=card.querySelector('[data-recover]').value.trim();
     if(action==='buy'){
       if(!window.confirm(`Comprar as etiquetas por ${formatarPreco(order.pending_cost_cents/100)} usando o saldo da carteira do Melhor Envio?`))return;
