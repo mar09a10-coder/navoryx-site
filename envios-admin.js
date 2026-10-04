@@ -7,7 +7,7 @@
   const orderMessage = document.getElementById('shippingOrdersMessage');
   const filter = document.getElementById('ordersFilter'),counts = document.getElementById('ordersCounts');
   const senderFields = ['nome','documento','inscricao_estadual','email','telefone','cep','endereco','numero','complemento','bairro','cidade','estado'];
-  let orders = [], page = 0, busy = false, sessionGeneration = 0;
+  let orders = [], page = 0, busy = false, sessionGeneration = 0, pendingBuyConfirmation = null;
   const statuses = {pending:'Aguardando pagamento',approved:'Pagamento aprovado',in_process:'Pagamento em análise',rejected:'Pagamento recusado',cancelled:'Pagamento cancelado',refunded:'Pagamento devolvido',charged_back:'Pagamento contestado',review:'Pagamento exige conferência',paid:'Frete comprado',generated:'Etiqueta gerada',printed:'Etiqueta impressa',posted:'Postado',released:'Em transporte',delivered:'Entregue'};
   async function shippingApi(path, options = {}) {
     const response = await fetch(API_BASE + path, {...options,headers:authHeaders(),signal:AbortSignal.timeout(60000)});
@@ -47,6 +47,7 @@
     return shippingApi('/admin/pedidos/'+id+'/'+action,{method:'POST',body:JSON.stringify(body)});
   }
   function textoBotaoEtiqueta(order, count, pending, paid, generated) {
+    if(pendingBuyConfirmation?.id===order.id)return 'Confirmar compra e imprimir etiqueta';
     if(generated)return 'Imprimir etiqueta';
     if(paid)return 'Gerar e imprimir etiqueta';
     if(pending)return 'Comprar e imprimir etiqueta';
@@ -63,10 +64,13 @@
     }
     if(atual.labels.some(l=>l.status==='pending')){
       const total=atual.pending_cost_cents||atual.labels.filter(l=>l.status==='pending').reduce((s,l)=>s+(Number(l.cost_cents)||0),0);
-      if(!window.confirm(`Comprar o frete por ${formatarPreco(total/100)} usando o saldo da carteira do Melhor Envio?`)){
-        orderMessage.textContent='Envio preparado. Para imprimir, primeiro compre o frete.';
+      if(pendingBuyConfirmation?.id!==id || pendingBuyConfirmation?.total!==total){
+        pendingBuyConfirmation={id,total};
+        orderMessage.textContent=`Envio preparado. Para comprar o frete por ${formatarPreco(total/100)} e imprimir, clique em Confirmar compra e imprimir etiqueta.`;
+        orders=orders.map(o=>o.id===id?atual:o);render();
         return atual;
       }
+      pendingBuyConfirmation=null;
       orderMessage.textContent='Comprando frete no Melhor Envio...';
       atual=await acaoPedido(id,'buy',{confirmedCents:total});
       orders=orders.map(o=>o.id===id?atual:o);render();
@@ -176,6 +180,7 @@
       else if(action==='test') orderMessage.textContent=result.is_test_order?'Pedido marcado como teste. Ele não entra mais no resumo financeiro.':'Pedido voltou a contar no resumo financeiro.';
       else orderMessage.textContent=action==='generate'?'Etiquetas geradas. Agora clique em Abrir etiqueta para imprimir.':'Pedido atualizado.';
     }catch(e){
+      if(action==='labelFlow')pendingBuyConfirmation=null;
       const prefix=action==='labelFlow'?'Não foi possível preparar/imprimir a etiqueta: ':action==='cancel'?'Não foi possível confirmar o cancelamento agora. Tente novamente em alguns instantes. ':'';
       orderMessage.textContent=prefix+e.message;
       orderMessage.className='admin-message error';
@@ -189,6 +194,6 @@
   document.getElementById('ordersNext').addEventListener('click',()=>{if(!busy){page++;loadOrders();}});
   document.querySelector('.admin-tabs').addEventListener('click',e=>{if(e.target.closest('[data-tab="shipping"]')){loadConfig();loadOrders();}});
   document.addEventListener('navoryx:login',()=>{sessionGeneration++;loadConfig();});
-  document.addEventListener('navoryx:logout',()=>{sessionGeneration++;orders=[];list.replaceChildren();form.reset();status.textContent='';message.textContent='';orderMessage.textContent='';});
+  document.addEventListener('navoryx:logout',()=>{sessionGeneration++;orders=[];pendingBuyConfirmation=null;list.replaceChildren();form.reset();status.textContent='';message.textContent='';orderMessage.textContent='';});
   if(token())loadConfig();
 })();
