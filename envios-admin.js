@@ -95,6 +95,7 @@
     if(action==='prepare'){
       body.invoice=card.querySelector('[data-invoice]').value.replace(/\D/g,'');
       if(body.invoice && !/^\d{44}$/.test(body.invoice)){orderMessage.textContent='A chave da NF-e precisa ter 44 números. Para declaração, deixe o campo em branco.';return;}
+      button.textContent='Preparando...';
     }
     if(action==='recover')body.labelId=card.querySelector('[data-recover]').value.trim();
     if(action==='buy'){
