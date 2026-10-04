@@ -43,11 +43,60 @@
     orderMessage.replaceChildren(link);
     if(!opened)orderMessage.prepend(document.createTextNode('O navegador bloqueou a abertura automática. '));
   }
+  async function acaoPedido(id, action, body = {}) {
+    return shippingApi('/admin/pedidos/'+id+'/'+action,{method:'POST',body:JSON.stringify(body)});
+  }
+  function textoBotaoEtiqueta(order, count, pending, paid, generated) {
+    if(generated)return 'Imprimir etiqueta';
+    if(paid)return 'Gerar e imprimir etiqueta';
+    if(pending)return 'Comprar e imprimir etiqueta';
+    if(count)return 'Continuar e imprimir etiqueta';
+    return 'Preparar e imprimir etiqueta';
+  }
+  async function executarFluxoEtiqueta(order, invoice) {
+    let atual=order;
+    const id=order.id;
+    while(atual.labels.length<atual.package_count){
+      orderMessage.textContent=`Preparando pacote ${atual.labels.length+1}/${atual.package_count}...`;
+      atual=await acaoPedido(id,'prepare',{invoice});
+      orders=orders.map(o=>o.id===id?atual:o);render();
+    }
+    if(atual.labels.some(l=>l.status==='pending')){
+      const total=atual.pending_cost_cents||atual.labels.filter(l=>l.status==='pending').reduce((s,l)=>s+(Number(l.cost_cents)||0),0);
+      if(!window.confirm(`Comprar o frete por ${formatarPreco(total/100)} usando o saldo da carteira do Melhor Envio?`)){
+        orderMessage.textContent='Envio preparado. Para imprimir, primeiro compre o frete.';
+        return atual;
+      }
+      orderMessage.textContent='Comprando frete no Melhor Envio...';
+      atual=await acaoPedido(id,'buy',{confirmedCents:total});
+      orders=orders.map(o=>o.id===id?atual:o);render();
+      if(atual.labels.some(l=>l.status==='pending')){
+        orderMessage.textContent='A compra do frete está processando. Clique em Conferir pagamento e rastreio ou tente imprimir novamente em alguns instantes.';
+        return atual;
+      }
+    }
+    if(atual.labels.some(l=>l.status==='paid')){
+      orderMessage.textContent='Gerando etiqueta...';
+      atual=await acaoPedido(id,'generate');
+      orders=orders.map(o=>o.id===id?atual:o);render();
+    }
+    const pronta=atual.labels.length===atual.package_count && atual.labels.every(l=>['generated','printed','posted','released','delivered'].includes(l.status));
+    if(!pronta){
+      orderMessage.textContent='A etiqueta ainda não ficou pronta para impressão. Confira o pedido novamente em alguns instantes.';
+      return atual;
+    }
+    orderMessage.textContent='Abrindo etiqueta para imprimir...';
+    atual=await acaoPedido(id,'print');
+    orders=orders.map(o=>o.id===id?atual:o);render();
+    if(atual.url)abrirEtiqueta(atual.url);
+    return atual;
+  }
   function render() {
     list.innerHTML=orders.length?orders.map(order=>{
       const c=order.customer,approved=order.payment_status==='approved',count=order.labels.length;
       const generated=count===order.package_count && order.labels.every(l=>['generated','printed','posted','released','delivered'].includes(l.status));
       const pending=order.labels.some(l=>l.status==='pending'),paid=order.labels.some(l=>l.status==='paid');
+      const labelFlowText=textoBotaoEtiqueta(order,count,pending,paid,generated);
       return `<article class="admin-card shipping-order" data-order="${escapeHtml(order.id)}">
         <div class="admin-toolbar"><h3>Pedido ${escapeHtml(order.id.slice(0,8).toUpperCase())}</h3><strong>${escapeHtml(order.order_status==='expired'?'Pedido expirado':order.order_status==='cancelled'?'Pedido cancelado':statuses[order.payment_status]||order.payment_status)}</strong></div>
         ${order.cancellation_pending?'<p class="admin-message">Cancelamento solicitado; aguardando confirmação. Confira o pagamento para atualizar.</p>':''}
@@ -66,11 +115,8 @@
           <button class="admin-secondary" data-action="refresh" type="button">Conferir pagamento e rastreio</button>
           <button class="admin-secondary" data-action="test" type="button">${order.is_test_order?'Contar no financeiro':'Marcar como pedido teste'}</button>
           ${order.can_cancel?'<button class="admin-secondary" data-action="cancel" type="button">'+(order.cancellation_pending?'Concluir cancelamento':'Cancelar pedido sem pagamento')+'</button>':''}
-          ${approved && count<order.package_count && order.shipment_status!=='cart_uncertain'?'<button class="product-buy-button" data-action="prepare" type="button">Preparar envio</button>':''}
+          ${approved && order.shipment_status!=='cart_uncertain'?`<button class="product-buy-button" data-action="labelFlow" type="button">${labelFlowText}</button>`:''}
           ${approved && order.shipment_status==='cart_uncertain'?'<button class="admin-secondary" data-action="recover" type="button">Vincular etiqueta existente</button>':''}
-          ${approved && count===order.package_count && pending && !order.purchase_uncertain?`<button class="product-buy-button" data-action="buy" type="button">Comprar frete · ${formatarPreco(order.pending_cost_cents/100)}</button>`:''}
-          ${approved && count===order.package_count && paid && !pending?'<button class="product-buy-button" data-action="generate" type="button">Gerar etiquetas</button>':''}
-          ${approved && generated?'<button class="product-buy-button" data-action="print" type="button">Abrir etiqueta para imprimir</button>':''}
           <a class="admin-secondary" href="https://melhorenvio.com.br" target="_blank" rel="noopener noreferrer">Abrir Melhor Envio</a>
         </div>
       </article>`;
@@ -99,10 +145,11 @@
       body.confirmed=true;
       button.textContent='Cancelando…';
     }
-    if(action==='prepare'){
-      body.invoice=card.querySelector('[data-invoice]').value.replace(/\D/g,'');
+    if(action==='prepare' || action==='labelFlow'){
+      const invoiceField=card.querySelector('[data-invoice]');
+      body.invoice=invoiceField?invoiceField.value.replace(/\D/g,''):(order.invoice||'');
       if(body.invoice && !/^\d{44}$/.test(body.invoice)){orderMessage.textContent='A chave da NF-e precisa ter 44 números. Para declaração, deixe o campo em branco.';return;}
-      button.textContent='Preparando...';
+      button.textContent=action==='labelFlow'?'Processando etiqueta...':'Preparando...';
     }
     if(action==='recover')body.labelId=card.querySelector('[data-recover]').value.trim();
     if(action==='buy'){
@@ -111,9 +158,13 @@
     }
     if(action==='print')button.textContent='Abrindo etiqueta...';
     busy=true;filter.disabled=true;list.querySelectorAll('button').forEach(b=>b.disabled=true);const generation=sessionGeneration;
-    orderMessage.textContent=action==='prepare'?'Preparando os pacotes…':action==='print'?'Abrindo a etiqueta para impressão…':action==='cancel'?'Cancelando pedido e liberando a reserva de estoque…':action==='test'?(body.isTest?'Marcando pedido como teste…':'Voltando a contar o pedido no financeiro…'):'Processando. Aguarde a confirmação…';
+    orderMessage.textContent=action==='labelFlow'?'Preparando a etiqueta até a impressão…':action==='prepare'?'Preparando os pacotes…':action==='print'?'Abrindo a etiqueta para impressão…':action==='cancel'?'Cancelando pedido e liberando a reserva de estoque…':action==='test'?(body.isTest?'Marcando pedido como teste…':'Voltando a contar o pedido no financeiro…'):'Processando. Aguarde a confirmação…';
     let result;
     try{
+      if(action==='labelFlow'){
+        result=await executarFluxoEtiqueta(order,body.invoice);
+        return;
+      }
       do{
         result=await shippingApi('/admin/pedidos/'+id+'/'+action,{method:'POST',body:JSON.stringify(body)});
         if(generation!==sessionGeneration)return;
