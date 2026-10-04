@@ -175,7 +175,12 @@
       else if(action==='cancel') orderMessage.textContent=result.cancellation_pending?'Cancelamento solicitado. O sistema continuará tentando concluir automaticamente.':'Pedido cancelado. A reserva de estoque foi liberada.';
       else if(action==='test') orderMessage.textContent=result.is_test_order?'Pedido marcado como teste. Ele não entra mais no resumo financeiro.':'Pedido voltou a contar no resumo financeiro.';
       else orderMessage.textContent=action==='generate'?'Etiquetas geradas. Agora clique em Abrir etiqueta para imprimir.':'Pedido atualizado.';
-    }catch(e){orderMessage.textContent=(action==='cancel'?'Não foi possível confirmar o cancelamento agora. Tente novamente em alguns instantes. ':'')+e.message;render();}
+    }catch(e){
+      const prefix=action==='labelFlow'?'Não foi possível preparar/imprimir a etiqueta: ':action==='cancel'?'Não foi possível confirmar o cancelamento agora. Tente novamente em alguns instantes. ':'';
+      orderMessage.textContent=prefix+e.message;
+      orderMessage.className='admin-message error';
+      render();
+    }
     finally{busy=false;filter.disabled=false;if(result && action==='cancel')loadOrders();}
   });
   document.getElementById('refreshOrders').addEventListener('click',loadOrders);
