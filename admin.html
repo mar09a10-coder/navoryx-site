@@ -153,9 +153,15 @@
             <h2>Origem dos envios</h2>
             <p class="admin-preview-note">Configuração privada. Informe uma vez o CEP de onde os produtos sairão. Conecte sua conta e complete o remetente em Pedidos e envios.</p>
             <form id="shippingConfigForm">
-              <div class="admin-field"><label for="shippingOrigin">CEP de origem</label><input id="shippingOrigin" type="text" inputmode="numeric" maxlength="9" pattern="[0-9]{5}-?[0-9]{3}" placeholder="00000-000"></div>
+              <div class="admin-form-grid">
+                <div class="admin-field"><label for="shippingOrigin">CEP de origem</label><input id="shippingOrigin" type="text" inputmode="numeric" maxlength="9" pattern="[0-9]{5}-?[0-9]{3}" placeholder="00000-000"></div>
+                <div class="admin-field"><label class="admin-check-label" for="shippingSubsidyEnabled"><input id="shippingSubsidyEnabled" type="checkbox"> Ativar ajuda automática no frete econômico</label><small class="admin-preview-note">O benefício só é aplicado quando a margem do carrinho permite.</small></div>
+                <div class="admin-field"><label for="shippingFreeTarget">Faixa de frete grátis econômico (R$)</label><input id="shippingFreeTarget" type="number" min="0" max="1000000" step="0.01" inputmode="decimal" placeholder="199,00"><small class="admin-preview-note">Valor do carrinho a partir do qual o sistema tenta liberar o PAC grátis, sem ultrapassar a margem disponível.</small></div>
+                <div class="admin-field"><label for="shippingMarginReserve">Margem mínima preservada (R$)</label><input id="shippingMarginReserve" type="number" min="0" max="1000000" step="0.01" inputmode="decimal" placeholder="10,00"><small class="admin-preview-note">Este valor fica protegido antes de qualquer subsídio de frete.</small></div>
+              </div>
+              <p class="admin-preview-note">Para o cálculo seguro funcionar, mantenha o custo de compra dos produtos preenchido. O Sedex continua sem subsídio automático.</p>
               <p id="shippingConfigMessage" class="admin-message" role="status" aria-live="polite"></p>
-              <button id="saveShippingConfig" type="submit" class="product-buy-button">Salvar origem dos envios</button>
+              <button id="saveShippingConfig" type="submit" class="product-buy-button">Salvar política de frete</button>
             </form>
           </div>
           <div class="admin-card">
@@ -256,7 +262,7 @@
       </div>
     </section>
   </main>
-  <script src="admin.js?v=20261003-estoque2"></script>
+  <script src="admin.js?v=20261005-frete-config1"></script>
   <script src="mercadolivre-preenchimento.js?v=20260927-preenchimento2"></script>
   <script src="mercadolivre-admin.js?v=20260928-campos-condicionais"></script>
 <script src="envios-admin.js?v=20261004-confirmacao-painel1"></script>
