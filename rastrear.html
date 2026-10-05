@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Rastrear pedido | Navoryx</title>
+  <meta name="description" content="Acompanhe o pagamento, a postagem e o rastreio do seu pedido Navoryx.">
+
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="stylesheet" href="style.css?v=20261002-mobile-checkout">
+  <link rel="preload" href="fonts/manrope-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="modern.css?v=20261005-rastreio1">
+</head>
+
+<body>
+  <div class="topbar">
+    Acompanhe seu pedido com segurança
+  </div>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.html" class="brand" aria-label="Navoryx — página inicial">
+        <img src="img/logo-small.webp" alt="Navoryx" class="logo-navoryx">
+      </a>
+
+      <form class="search" action="index.html" method="get">
+        <input aria-label="Buscar produtos" type="search" name="busca" placeholder="O que você procura?" autocomplete="off">
+        <button type="submit">Buscar</button>
+      </form>
+
+      <a href="rastrear.html" class="header-action header-track" aria-current="page">
+        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M21 10H3"/><path d="M7 15h1"/><path d="M12 15h1"/><rect x="3" y="6" width="18" height="12" rx="2"/></svg>
+        <span>Rastrear pedido</span>
+      </a>
+
+      <a aria-label="Ver carrinho" href="carrinho.html" class="cart-button">
+        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 3h2l2.4 12h11l2-8H6"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
+        <span class="cart-label">Carrinho</span>
+        <span id="cartCount">0</span>
+      </a>
+    </div>
+
+    <nav class="nav" aria-label="Navegação principal">
+      <a href="index.html">Início</a>
+      <a href="index.html#categorias">Categorias</a>
+      <a href="index.html#destaques">Destaques</a>
+      <a href="index.html#contato">Contato</a>
+    </nav>
+  </header>
+
+  <main class="tracking-page">
+    <div class="container tracking-shell">
+      <section class="tracking-panel">
+        <span class="section-kicker">ACOMPANHAMENTO</span>
+        <h1>Rastrear pedido</h1>
+        <p>Cole o link que apareceu depois do pagamento ou o código do pedido. O sistema consulta o status no backend da Navoryx sem mostrar seus dados pessoais.</p>
+
+        <form class="tracking-form" id="trackingForm">
+          <label for="trackingCode">Link ou código do pedido</label>
+          <div class="tracking-input-row">
+            <input id="trackingCode" name="pedido" autocomplete="off" placeholder="Cole aqui o link de acompanhamento">
+            <button type="submit">Consultar</button>
+          </div>
+        </form>
+
+        <div class="tracking-actions">
+          <a id="lastOrderLink" class="tracking-secondary" href="#" hidden>Abrir último pedido deste aparelho</a>
+          <button id="copyTrackingLink" class="tracking-copy" type="button">Copiar link</button>
+        </div>
+
+        <div class="tracking-result" aria-live="polite">
+          <div id="statusIcon" class="tracking-icon">⌕</div>
+          <h2 id="statusTitle">Rastrear pedido</h2>
+          <p id="statusMessage">Cole o link ou código do pedido para consultar.</p>
+          <div id="orderTracking" class="tracking-list"></div>
+          <button id="cancelOrder" type="button" class="tracking-secondary" hidden>Cancelar pedido sem pagamento</button>
+          <button id="refreshOrder" type="button" class="tracking-secondary">Atualizar status</button>
+        </div>
+      </section>
+
+      <aside class="tracking-help">
+        <h2>Onde encontro esse código?</h2>
+        <ol>
+          <li>Depois do pagamento, a página de retorno mostra o acompanhamento do pedido.</li>
+          <li>Você pode salvar ou copiar o link dessa página.</li>
+          <li>No mesmo aparelho, o botão de último pedido aparece automaticamente.</li>
+        </ol>
+        <p>Se perdeu o link, fale com o atendimento informando nome, e-mail e telefone usados na compra.</p>
+        <a class="contact-button" href="https://wa.me/5527988732742?text=Olá%2C%20preciso%20de%20ajuda%20para%20rastrear%20meu%20pedido%20Navoryx." target="_blank" rel="noopener noreferrer">Falar no WhatsApp</a>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <div>
+        <strong class="footer-logo">NAVORYX</strong>
+        <p>Tecnologia • Acessórios • Utilidades</p>
+      </div>
+      <div>
+        <p>© 2026 Navoryx.</p>
+        <p class="footer-links"><a href="rastrear.html">Rastrear pedido</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js?v=20261005-rastreio1"></script>
+  <script src="acompanhar-pedido.js?v=20261005-rastreio1"></script>
+</body>
+
+</html>
