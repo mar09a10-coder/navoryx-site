@@ -291,18 +291,19 @@ function nxApplyCatalogControls() {
   const sort = document.getElementById('nxCatalogSort');
   const stockOnly = document.getElementById('nxStockOnly');
   if (!grid) return;
-  const cards = [...grid.querySelectorAll('.product-card')];
-  cards.forEach(card => {
+  const currentCards = [...grid.querySelectorAll('.product-card')];
+  currentCards.forEach(card => {
     card.hidden = Boolean(stockOnly && stockOnly.checked && Number(card.dataset.nxStock || 0) <= 0);
   });
   const mode = sort ? sort.value : 'relevance';
   if (mode !== 'relevance') {
-    cards.sort((a, b) => {
+    const sorted = [...currentCards].sort((a, b) => {
       if (mode === 'price-asc') return Number(a.dataset.nxPrice || 0) - Number(b.dataset.nxPrice || 0);
       if (mode === 'price-desc') return Number(b.dataset.nxPrice || 0) - Number(a.dataset.nxPrice || 0);
       if (mode === 'name') return String(a.dataset.nxName || '').localeCompare(String(b.dataset.nxName || ''), 'pt-BR');
       return 0;
-    }).forEach(card => grid.appendChild(card));
+    });
+    if (sorted.some((card, index) => card !== currentCards[index])) sorted.forEach(card => grid.appendChild(card));
   }
 }
 function nxInstallCatalogToolbar() {
@@ -423,6 +424,27 @@ function nxInstallProductTools(product) {
   const info = document.querySelector('.product-page-info');
   if (!info || document.getElementById('nxProductTools')) return;
   const id = String(product.id);
+  const breadcrumb = document.getElementById('nxBreadcrumbProduct');
+  if (breadcrumb) breadcrumb.textContent = product.name || 'Produto';
+
+  const priceElement = document.getElementById('dynamicProductPrice');
+  const regularPrice = Number(product.price);
+  const currentPrice = nxPrice(product);
+  if (priceElement && Number.isFinite(regularPrice) && currentPrice > 0) {
+    priceElement.replaceChildren();
+    if (regularPrice > currentPrice) {
+      const old = document.createElement('s');
+      old.className = 'nx-product-old-price';
+      old.textContent = nxMoney(regularPrice);
+      const badge = document.createElement('span');
+      badge.className = 'nx-product-discount';
+      badge.textContent = '-' + nxDiscount(product) + '%';
+      priceElement.append(old, badge);
+    }
+    const current = document.createElement('strong');
+    current.textContent = nxMoney(currentPrice);
+    priceElement.appendChild(current);
+  }
   const tools = document.createElement('div');
   tools.id = 'nxProductTools';
   tools.className = 'nx-product-tools';
