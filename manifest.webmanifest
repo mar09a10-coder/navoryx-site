@@ -1,0 +1,18 @@
+{
+  "name": "Navoryx - Tecnologia e Acessórios",
+  "short_name": "Navoryx",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#05070b",
+  "theme_color": "#078cff",
+  "description": "Tecnologia, acessórios e utilidades para o seu dia a dia.",
+  "icons": [
+    {
+      "src": "img/logo-small.webp",
+      "sizes": "any",
+      "type": "image/webp",
+      "purpose": "any"
+    }
+  ]
+}
