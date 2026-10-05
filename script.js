@@ -16,6 +16,26 @@ function precoAtualProduto(produto) {
   return Number.isFinite(preco) && preco > 0 ? Math.round(preco * 100) / 100 : 0;
 }
 
+function dadosPromocaoProduto(produto) {
+  const normal = Number(produto?.price);
+  const atual = precoAtualProduto(produto || {});
+  const emPromocao = Number.isFinite(normal) && normal > 0 && atual > 0 && atual < normal;
+  return {
+    emPromocao,
+    precoAnterior: emPromocao ? Math.round(normal * 100) / 100 : 0,
+    desconto: emPromocao ? Math.max(1, Math.round((1 - atual / normal) * 100)) : 0
+  };
+}
+
+function animarCarrinho() {
+  const botao = document.querySelector('.cart-button');
+  if (!botao) return;
+  botao.classList.remove('cart-updated');
+  void botao.offsetWidth;
+  botao.classList.add('cart-updated');
+  setTimeout(() => botao.classList.remove('cart-updated'), 550);
+}
+
 async function consultarLoja(url, options = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 60000);
@@ -222,6 +242,16 @@ const storeProducts =
   document.getElementById('storeProducts');
 
 let produtosLoja = [];
+let listaCatalogoAtual = [];
+
+function ordenarProdutos(lista) {
+  const ordenacao = document.getElementById('sortProducts')?.value || 'featured';
+  const copia = Array.isArray(lista) ? [...lista] : [];
+  if (ordenacao === 'price-asc') copia.sort((a, b) => precoAtualProduto(a) - precoAtualProduto(b));
+  if (ordenacao === 'price-desc') copia.sort((a, b) => precoAtualProduto(b) - precoAtualProduto(a));
+  if (ordenacao === 'name') copia.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'pt-BR'));
+  return copia;
+}
 
 
 // ==========================================
@@ -235,16 +265,19 @@ function renderizarProdutosLoja(lista = produtosLoja) {
   }
 
   storeProducts.innerHTML = '';
+  storeProducts.classList.remove('product-grid-loading');
   storeProducts.setAttribute('aria-busy', 'false');
+  listaCatalogoAtual = Array.isArray(lista) ? [...lista] : [];
+  const listaOrdenada = ordenarProdutos(listaCatalogoAtual);
   const catalogStatus = document.getElementById('catalogStatus');
   if (catalogStatus) {
-    const total = Array.isArray(lista) ? lista.filter(produto => produto.active !== false).length : 0;
+    const total = listaOrdenada.filter(produto => produto.active !== false).length;
     catalogStatus.textContent = `${total} ${total === 1 ? 'produto disponível' : 'produtos disponíveis'}`;
   }
 
   if (
-    !Array.isArray(lista) ||
-    lista.length === 0
+    !Array.isArray(listaOrdenada) ||
+    listaOrdenada.length === 0
   ) {
 
     storeProducts.innerHTML = `
@@ -256,7 +289,7 @@ function renderizarProdutosLoja(lista = produtosLoja) {
     return;
   }
 
-  lista.forEach(produto => {
+  listaOrdenada.forEach(produto => {
 
     if (produto.active === false) {
       return;
@@ -281,6 +314,7 @@ function renderizarProdutosLoja(lista = produtosLoja) {
       precoAtualProduto(produto);
     const estoqueProduto =
       Math.max(0, Math.floor(Number(produto.stock) || 0));
+    const promocao = dadosPromocaoProduto(produto);
 
     card.dataset.search = `
       ${nomeProduto}
@@ -294,13 +328,12 @@ function renderizarProdutosLoja(lista = produtosLoja) {
         href="produto.html?id=${encodeURIComponent(produto.id)}"
         class="product-media-link"
       >
-
+        ${promocao.emPromocao ? `<span class="product-discount-card">-${promocao.desconto}%</span>` : ''}
         <img
           src="${imagemProduto}"
           alt="${nomeProduto}"
           class="product-image" loading="lazy" decoding="async"
         >
-
       </a>
 
       <div class="product-card-content">
@@ -308,26 +341,30 @@ function renderizarProdutosLoja(lista = produtosLoja) {
           <h3>${nomeProduto}</h3>
         </a>
 
-      <p>
-        ${descricaoProduto}
-      </p>
+        <p>${descricaoProduto}</p>
 
-      <span class="product-price">
-        ${formatarPreco(precoProduto)}
-      </span>
+        <div class="product-card-price">
+          ${promocao.emPromocao ? `<span class="product-old-price">${formatarPreco(promocao.precoAnterior)}</span>` : ''}
+          <span class="product-price">${formatarPreco(precoProduto)}</span>
+        </div>
 
-      <button
-        type="button"
-        class="add-cart"
-        data-id="${produto.id}"
-        data-name="${nomeProduto}"
-        data-price="${precoProduto}"
-        data-image="${imagemProduto}"
-        data-stock="${estoqueProduto}"
-        ${estoqueProduto <= 0 ? 'disabled' : ''}
-      >
-        ${estoqueProduto <= 0 ? 'Produto esgotado' : 'Adicionar ao Carrinho'}
-      </button>
+        <div class="product-card-meta">
+          <span>${estoqueProduto > 0 ? 'Em estoque' : 'Indisponível'}</span>
+          <span>Frete no carrinho</span>
+        </div>
+
+        <button
+          type="button"
+          class="add-cart"
+          data-id="${produto.id}"
+          data-name="${nomeProduto}"
+          data-price="${precoProduto}"
+          data-image="${imagemProduto}"
+          data-stock="${estoqueProduto}"
+          ${estoqueProduto <= 0 ? 'disabled' : ''}
+        >
+          ${estoqueProduto <= 0 ? 'Produto esgotado' : 'Adicionar ao carrinho'}
+        </button>
       </div>
 
     `;
@@ -380,9 +417,14 @@ async function carregarProdutos() {
       JSON.stringify(produtosLoja)
     );
 
-    renderizarProdutosLoja(
-      produtosLoja
-    );
+    const buscaInicial = new URLSearchParams(window.location.search).get('busca') || '';
+    if (searchInput && buscaInicial) {
+      searchInput.value = buscaInicial;
+      aplicarBusca(buscaInicial);
+      document.getElementById('destaques')?.scrollIntoView();
+    } else {
+      renderizarProdutosLoja(produtosLoja);
+    }
 
   } catch (erro) {
 
@@ -484,6 +526,7 @@ document.addEventListener(
 
     botao.textContent =
       '✓ Adicionado';
+    animarCarrinho();
 
     setTimeout(() => {
 
@@ -505,6 +548,71 @@ const searchForm =
 const searchInput =
   document.getElementById('searchInput');
 
+const searchSuggestions =
+  document.getElementById('searchSuggestions');
+
+function produtosQueCombinam(termo) {
+  const normalizado = String(termo || '').trim().toLowerCase();
+  if (!normalizado) return produtosLoja;
+  return produtosLoja.filter(produto => `
+    ${produto.name || ''}
+    ${produto.description || ''}
+    ${produto.category || ''}
+  `.toLowerCase().includes(normalizado));
+}
+
+function aplicarBusca(termo) {
+  const normalizado = String(termo || '').trim();
+  renderizarProdutosLoja(normalizado ? produtosQueCombinam(normalizado) : produtosLoja);
+}
+
+function ocultarSugestoesBusca() {
+  if (!searchSuggestions || !searchInput) return;
+  searchSuggestions.hidden = true;
+  searchSuggestions.replaceChildren();
+  searchInput.setAttribute('aria-expanded', 'false');
+}
+
+function mostrarSugestoesBusca(termo) {
+  if (!searchSuggestions || !searchInput) return;
+  const normalizado = String(termo || '').trim();
+  if (normalizado.length < 2) {
+    ocultarSugestoesBusca();
+    return;
+  }
+  const resultados = produtosQueCombinam(normalizado).slice(0, 5);
+  searchSuggestions.replaceChildren();
+  if (!resultados.length) {
+    const vazio = document.createElement('div');
+    vazio.className = 'search-suggestion-empty';
+    vazio.textContent = 'Nenhum produto encontrado';
+    searchSuggestions.appendChild(vazio);
+  } else {
+    resultados.forEach(produto => {
+      const link = document.createElement('a');
+      link.className = 'search-suggestion-item';
+      link.href = 'produto.html?id=' + encodeURIComponent(produto.id);
+
+      const imagem = document.createElement('img');
+      imagem.src = produto.image || 'img/sem-imagem.png';
+      imagem.alt = '';
+
+      const texto = document.createElement('span');
+      texto.className = 'search-suggestion-copy';
+      const nome = document.createElement('strong');
+      nome.textContent = produto.name || 'Produto';
+      const preco = document.createElement('span');
+      preco.textContent = formatarPreco(precoAtualProduto(produto));
+      texto.append(nome, preco);
+
+      link.append(imagem, texto);
+      searchSuggestions.appendChild(link);
+    });
+  }
+  searchSuggestions.hidden = false;
+  searchInput.setAttribute('aria-expanded', 'true');
+}
+
 if (
   searchForm &&
   searchInput
@@ -513,69 +621,27 @@ if (
   searchForm.addEventListener(
     'submit',
     function(evento) {
-
       evento.preventDefault();
-
-      const termo =
-        searchInput.value
-          .trim()
-          .toLowerCase();
-
-      if (!termo) {
-
-        renderizarProdutosLoja(
-          produtosLoja
-        );
-
-        return;
-      }
-
-      const resultado =
-        produtosLoja.filter(produto => {
-
-          const texto = `
-            ${produto.name || ''}
-            ${produto.description || ''}
-            ${produto.category || ''}
-          `.toLowerCase();
-
-          return texto.includes(
-            termo
-          );
-        });
-
-      renderizarProdutosLoja(
-        resultado
-      );
-
-      const secaoProdutos =
-        document.getElementById(
-          'destaques'
-        );
-
-      if (secaoProdutos) {
-
-        secaoProdutos.scrollIntoView({
-          behavior: 'smooth'
-        });
-      }
+      aplicarBusca(searchInput.value);
+      ocultarSugestoesBusca();
+      const secaoProdutos = document.getElementById('destaques');
+      secaoProdutos?.scrollIntoView({ behavior: 'smooth' });
     }
   );
 
-  searchInput.addEventListener(
-    'input',
-    function() {
+  searchInput.addEventListener('input', function() {
+    const termo = searchInput.value.trim();
+    if (!termo) renderizarProdutosLoja(produtosLoja);
+    mostrarSugestoesBusca(termo);
+  });
 
-      if (
-        searchInput.value.trim() === ''
-      ) {
+  searchInput.addEventListener('keydown', function(evento) {
+    if (evento.key === 'Escape') ocultarSugestoesBusca();
+  });
 
-        renderizarProdutosLoja(
-          produtosLoja
-        );
-      }
-    }
-  );
+  document.addEventListener('click', function(evento) {
+    if (!searchForm.contains(evento.target)) ocultarSugestoesBusca();
+  });
 }
 
 
@@ -598,6 +664,7 @@ categoryCards.forEach(card => {
       categoryTerms[selected]?.test(`${produto.category || ''} ${produto.name || ''}`)
     );
     renderizarProdutosLoja(matches);
+    ocultarSugestoesBusca();
   });
 });
 
@@ -605,7 +672,12 @@ categoryCards.forEach(card => {
 document.getElementById('showAllProducts')?.addEventListener('click', () => {
   if (searchInput) searchInput.value = '';
   categoryCards.forEach(card => card.removeAttribute('aria-current'));
+  ocultarSugestoesBusca();
   renderizarProdutosLoja(produtosLoja);
+});
+
+document.getElementById('sortProducts')?.addEventListener('change', () => {
+  renderizarProdutosLoja(listaCatalogoAtual);
 });
 
 // ==========================================
@@ -640,6 +712,15 @@ const dynamicProductImage =
   document.getElementById(
     'dynamicProductImage'
   );
+
+const dynamicProductOldPrice =
+  document.getElementById('dynamicProductOldPrice');
+
+const dynamicProductDiscount =
+  document.getElementById('dynamicProductDiscount');
+
+const dynamicBreadcrumbName =
+  document.getElementById('dynamicBreadcrumbName');
 
 const dynamicProductFullDescription =
   document.getElementById(
@@ -740,10 +821,11 @@ function mostrarProdutoNaoEncontrado() {
   }
 
   if (dynamicProductPrice) {
-
-    dynamicProductPrice.textContent =
-      '';
+    dynamicProductPrice.textContent = '';
   }
+  if (dynamicProductOldPrice) dynamicProductOldPrice.hidden = true;
+  if (dynamicProductDiscount) dynamicProductDiscount.hidden = true;
+  if (dynamicBreadcrumbName) dynamicBreadcrumbName.textContent = 'Produto';
 
   if (dynamicProductImage) {
 
@@ -865,6 +947,10 @@ async function carregarProdutoIndividual() {
     produto.name ||
     'Produto';
 
+  if (dynamicBreadcrumbName) {
+    dynamicBreadcrumbName.textContent = produto.name || 'Produto';
+  }
+
   if (dynamicProductDescription) {
 
     dynamicProductDescription.textContent =
@@ -875,6 +961,20 @@ async function carregarProdutoIndividual() {
     formatarPreco(
       precoAtualProduto(produto)
     );
+
+  const promocaoProduto = dadosPromocaoProduto(produto);
+  if (dynamicProductOldPrice) {
+    dynamicProductOldPrice.hidden = !promocaoProduto.emPromocao;
+    dynamicProductOldPrice.textContent = promocaoProduto.emPromocao
+      ? formatarPreco(promocaoProduto.precoAnterior)
+      : '';
+  }
+  if (dynamicProductDiscount) {
+    dynamicProductDiscount.hidden = !promocaoProduto.emPromocao;
+    dynamicProductDiscount.textContent = promocaoProduto.emPromocao
+      ? '-' + promocaoProduto.desconto + '%'
+      : '';
+  }
 
   dynamicProductImage.src =
     produto.image ||
@@ -941,6 +1041,7 @@ if (buyButton) {
 
       buyButton.textContent =
         '✓ Produto adicionado';
+      animarCarrinho();
 
       setTimeout(() => {
 
