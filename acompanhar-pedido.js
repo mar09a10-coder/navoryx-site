@@ -13,6 +13,7 @@
   const input = document.getElementById('trackingCode');
   const lastOrder = document.getElementById('lastOrderLink');
   const copyLink = document.getElementById('copyTrackingLink');
+  const trackLater = document.getElementById('trackLaterLink');
   const statuses = {
     pending: 'Aguardando pagamento',
     in_process: 'Pagamento em análise',
@@ -35,6 +36,19 @@
     cancelled: 'Envio cancelado'
   };
   let busy = false;
+  let autoTimer = null;
+  const shipmentLabels = {
+    not_prepared: 'Aguardando preparação do envio',
+    prepared: 'Frete preparado',
+    purchase_pending: 'Compra do frete em processamento',
+    cart_uncertain: 'Conferindo criação da etiqueta',
+    paid: 'Frete comprado',
+    generated: 'Etiqueta gerada',
+    printed: 'Etiqueta impressa',
+    posted: 'Pedido postado',
+    released: 'Pedido em transporte',
+    delivered: 'Pedido entregue'
+  };
 
   function extractToken(value) {
     const raw = String(value || '').trim();
@@ -61,6 +75,15 @@
     message.textContent = text || 'Cole o link de acompanhamento ou o código do pedido para consultar o pagamento, a postagem e o rastreio.';
     list.replaceChildren();
     if (cancel) cancel.hidden = true;
+    if (copyLink) copyLink.hidden = true;
+  }
+
+  function scheduleRefresh(order) {
+    if (autoTimer && typeof clearTimeout === 'function') clearTimeout(autoTimer);
+    autoTimer = null;
+    const active = !['closed', 'expired', 'cancelled'].includes(order.order_status) &&
+      !['approved', 'cancelled', 'rejected', 'refunded', 'charged_back'].includes(order.payment_status);
+    if (!form && active && typeof setTimeout === 'function') autoTimer = setTimeout(() => update(), 30000);
   }
 
   function render(order) {
@@ -84,6 +107,12 @@
     const details = document.createElement('p');
     details.textContent = `Total: ${Number(order.total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} · Entrega: ${order.shipping_method || 'A definir'}`;
     list.appendChild(details);
+
+    if (approved && order.shipment_status) {
+      const envio = document.createElement('p');
+      envio.textContent = 'Status do envio: ' + (shipmentLabels[order.shipment_status] || 'Em preparação');
+      list.appendChild(envio);
+    }
 
     if (!approved && !closed) {
       const deadline = order.payment_due_at || order.payment_expires_at;
@@ -115,6 +144,10 @@
       }
     }
 
+    if (trackLater) trackLater.href = trackingUrl(token);
+    if (copyLink) copyLink.hidden = false;
+    scheduleRefresh(order);
+
     try {
       localStorage.setItem('navoryxLastOrder', trackingUrl(token));
       if (approved) {
@@ -132,6 +165,8 @@
 
   async function update(cancelar = false) {
     if (busy) return;
+    if (autoTimer && typeof clearTimeout === 'function') clearTimeout(autoTimer);
+    autoTimer = null;
     if (!/^[a-f0-9]{64}$/.test(token || '')) {
       setIdleState('Informe o link ou o código do pedido para consultar.');
       return;
@@ -139,6 +174,10 @@
     busy = true;
     if (button) button.disabled = true;
     if (cancel) cancel.disabled = true;
+    if (cancelar) {
+      message.textContent = 'Cancelando o pedido...';
+      if (cancel) cancel.textContent = 'Cancelando...';
+    }
     try {
       const response = await fetch(API_BASE + '/pedidos/acompanhar/' + token + (cancelar ? '/cancelar' : ''), {
         ...(cancelar ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirmed: true }) } : {}),
@@ -174,7 +213,7 @@
 
   button?.addEventListener('click', () => update());
   cancel?.addEventListener('click', () => {
-    if (!busy && window.confirm('Cancelar este pedido ainda não pago? Para comprar depois, será necessário fazer um novo pedido.')) update(true);
+    if (!busy) update(true);
   });
   copyLink?.addEventListener('click', async () => {
     if (!/^[a-f0-9]{64}$/.test(token || '')) return;
