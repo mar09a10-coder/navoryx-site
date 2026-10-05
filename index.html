@@ -13,14 +13,18 @@
   <link rel="icon" type="image/png" href="img/favicon.png">
   <link rel="stylesheet" href="style.css?v=20261002-mobile-checkout">
   <link rel="preload" href="fonts/manrope-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="modern.css?v=20261005-rastreio1">
+  <link rel="stylesheet" href="modern.css?v=20261005-commerce3">
 </head>
 
 <body class="store-home">
   <a class="skip-link" href="#destaques">Ir para os produtos</a>
 
   <div class="topbar">
-    Tecnologia para o seu dia a dia <span class="topbar-divider">•</span> Compra segura
+    <div class="container topbar-inner">
+      <span>Pagamento seguro pelo Mercado Pago</span>
+      <span>Frete calculado para seu CEP</span>
+      <a href="rastrear.html">Acompanhe seu pedido</a>
+    </div>
   </div>
 
   <header class="header">
@@ -34,20 +38,19 @@
           class="logo-navoryx">
       </a>
 
-     <form class="search" id="searchForm">
-
-  <input
-    type="search"
-    id="searchInput"
-    placeholder="Encontre seu próximo acessório"
-    aria-label="Buscar produtos"
-    autocomplete="off">
-
-  <button type="submit">
-    Buscar
-  </button>
-
-</form>
+      <form class="search" id="searchForm" role="search">
+        <input
+          type="search"
+          id="searchInput"
+          name="busca"
+          placeholder="Busque por produto, categoria ou acessório"
+          aria-label="Buscar produtos"
+          aria-controls="searchSuggestions"
+          aria-expanded="false"
+          autocomplete="off">
+        <button type="submit">Buscar</button>
+        <div id="searchSuggestions" class="search-suggestions" role="listbox" hidden></div>
+      </form>
 
             <a href="rastrear.html" class="header-action header-track">
         <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M21 10H3"/><path d="M7 15h1"/><path d="M12 15h1"/><rect x="3" y="6" width="18" height="12" rx="2"/></svg>
@@ -92,9 +95,10 @@
 
           <p class="hero-subtitle">Tecnologia, acessórios e utilidades para tornar sua rotina mais prática.</p>
 
-          <div class="hero-benefits">
-            <div>✓ Produtos selecionados</div>
+          <div class="hero-benefits" aria-label="Vantagens da Navoryx">
             <div>✓ Compra segura</div>
+            <div>✓ Frete para todo o Brasil</div>
+            <div>✓ Rastreio pela Navoryx</div>
           </div>
 
           <div class="hero-actions">
@@ -169,12 +173,24 @@
       <div><span class="section-kicker">NOSSA SELEÇÃO</span><h2>Produtos em destaque</h2><p>Acessórios para simplificar a sua rotina.</p></div>
       <button type="button" class="catalog-reset" id="showAllProducts">Ver todos <span aria-hidden="true">→</span></button>
     </div>
-    <p class="catalog-status" id="catalogStatus" role="status" aria-live="polite"></p>
+    <div class="catalog-toolbar">
+      <p class="catalog-status" id="catalogStatus" role="status" aria-live="polite"></p>
+      <label class="catalog-sort">
+        <span>Ordenar</span>
+        <select id="sortProducts" aria-label="Ordenar produtos">
+          <option value="featured">Destaques</option>
+          <option value="price-asc">Menor preço</option>
+          <option value="price-desc">Maior preço</option>
+          <option value="name">Nome A–Z</option>
+        </select>
+      </label>
+    </div>
 
-    <div
-      class="product-grid"
-      id="storeProducts" aria-busy="true">
-      <p class="no-products">Carregando produtos…</p>
+    <div class="product-grid product-grid-loading" id="storeProducts" aria-busy="true">
+      <div class="product-skeleton" aria-hidden="true"></div>
+      <div class="product-skeleton" aria-hidden="true"></div>
+      <div class="product-skeleton" aria-hidden="true"></div>
+      <div class="product-skeleton" aria-hidden="true"></div>
     </div>
 
   </div>
@@ -349,7 +365,7 @@
   </div>
 
 </footer>
-<script src="script.js?v=20261005-rastreio1"></script>
+<script src="script.js?v=20261005-commerce3"></script>
 <script src="atendimento.js?v=20261002-atendimento1"></script>
 </body>
 </html>
