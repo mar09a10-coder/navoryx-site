@@ -20,7 +20,7 @@ function obterFreteSelecionado() {
     const frete = JSON.parse(localStorage.getItem(FRETE_STORAGE_KEY));
     if (!frete || frete.cart !== identidadeCarrinhoFrete() || frete.expiresAt <= Date.now() ||
         !/^\d{8}$/.test(frete.cep) || !/^melhorenvio:[12]$/.test(frete.method) ||
-        !frete.token || !Number.isFinite(frete.price) || frete.price <= 0) return null;
+        !frete.token || !Number.isFinite(frete.price) || frete.price < 0) return null;
     return frete;
   } catch (_) { return null; }
 }
@@ -36,11 +36,15 @@ function statusFrete(mensagem, tipo = 'info') {
   freteStatus.dataset.type = tipo;
 }
 
+function formatarValorFrete(valor) {
+  return Number(valor) === 0 ? 'Grátis' : formatarPreco(Number(valor));
+}
+
 function atualizarResumoFrete() {
   const frete = obterFreteSelecionado();
   const subtotal = obterCarrinho().reduce((s, i) => s + Number(i.price) * Number(i.quantity), 0);
   document.querySelectorAll('[data-shipping-summary]').forEach(el => {
-    el.textContent = !frete ? 'Selecione a entrega' : formatarPreco(frete.price);
+    el.textContent = !frete ? 'Selecione a entrega' : formatarValorFrete(frete.price);
   });
   ['cartTotal', 'checkoutTotal', 'paymentTotal'].forEach(id => {
     const el = document.getElementById(id);
@@ -53,7 +57,7 @@ function atualizarResumoFrete() {
   if (botao && !pagamentoEmAndamento) botao.textContent = 'Ir para pagamento seguro';
   const info = document.getElementById('shippingPaymentInfo');
   if (info) info.textContent = !frete ? 'Volte ao checkout para selecionar ou recalcular a entrega.' :
-    frete.name;
+    frete.name + (frete.price === 0 ? ' • Grátis' : '');
 }
 
 function invalidarFrete() {
@@ -84,26 +88,90 @@ async function calcularFrete() {
     });
     if (versao !== freteConsultaVersao || cart !== identidadeCarrinhoFrete()) return;
     if (!Array.isArray(data.options) || data.cep !== cep || !Number.isFinite(data.expiresAt)) throw new Error('Não foi possível consultar as opções de entrega.');
-    freteOpcoes = data.options.filter(o => /^melhorenvio:[12]$/.test(o.id) && typeof o.token === 'string' && Number.isFinite(o.price) && o.price > 0);
-    for (const opcao of freteOpcoes) {
-      const label = document.createElement('label'); label.className = 'shipping-option';
+    freteOpcoes = data.options.filter(o => /^melhorenvio:[12]$/.test(o.id) && typeof o.token === 'string' &&
+      Number.isFinite(o.price) && o.price >= 0).sort((a, b) => Number(Boolean(b.isEconomy || b.id === 'melhorenvio:1')) -
+        Number(Boolean(a.isEconomy || a.id === 'melhorenvio:1')));
+
+    const selecionar = (opcao, radio) => {
+      if (cart !== identidadeCarrinhoFrete() || data.expiresAt <= Date.now()) { invalidarFrete(); return; }
+      try {
+        localStorage.setItem(FRETE_STORAGE_KEY, JSON.stringify({ method: opcao.id, name: opcao.name,
+          price: opcao.price, originalPrice: Number.isFinite(opcao.originalPrice) ? opcao.originalPrice : opcao.price,
+          discount: Number.isFinite(opcao.discount) ? opcao.discount : 0, free: Boolean(opcao.free),
+          token: opcao.token, cep, cart, expiresAt: data.expiresAt }));
+        radio.checked = true;
+        if (cepInput) { cepInput.value = cep.slice(0, 5) + '-' + cep.slice(5); buscarCep(cep); }
+        atualizarResumoFrete();
+      } catch (_) { statusFrete('Permita o armazenamento do site para continuar.', 'error'); }
+    };
+
+    const criarOpcao = opcao => {
+      const economica = Boolean(opcao.isEconomy || opcao.id === 'melhorenvio:1');
+      const label = document.createElement('label');
+      label.className = 'shipping-option' + (economica ? ' shipping-option--economy' : '');
       const radio = document.createElement('input'); radio.type = 'radio'; radio.name = 'shippingMethod'; radio.value = opcao.id;
       const texto = document.createElement('span');
-      const titulo = document.createElement('strong'); titulo.textContent = opcao.name;
-      const descricao = document.createElement('small'); descricao.textContent = opcao.description;
-      const preco = document.createElement('b'); preco.textContent = formatarPreco(opcao.price);
-      texto.append(titulo, descricao); label.append(radio, texto, preco); freteLista.appendChild(label);
-      radio.addEventListener('change', () => {
-        if (cart !== identidadeCarrinhoFrete() || data.expiresAt <= Date.now()) { invalidarFrete(); return; }
-        try {
-          localStorage.setItem(FRETE_STORAGE_KEY, JSON.stringify({ method: opcao.id, name: opcao.name,
-            price: opcao.price, token: opcao.token, cep, cart, expiresAt: data.expiresAt }));
-          if (cepInput) { cepInput.value = cep.slice(0, 5) + '-' + cep.slice(5); buscarCep(cep); }
-          atualizarResumoFrete();
-        } catch (_) { statusFrete('Permita o armazenamento do site para continuar.', 'error'); }
-      });
+      const titulo = document.createElement('strong'); titulo.textContent = economica ? 'Entrega econômica' : opcao.name;
+      const descricao = document.createElement('small');
+      descricao.textContent = economica ? opcao.name + ' • ' + opcao.description : opcao.description;
+      texto.append(titulo, descricao);
+      if (Number(opcao.discount) > 0) {
+        const economia = document.createElement('small'); economia.className = 'shipping-saving';
+        economia.textContent = 'Você economiza ' + formatarPreco(opcao.discount) + ' no frete';
+        texto.append(economia);
+      }
+      const preco = document.createElement('span'); preco.className = 'shipping-option-price';
+      if (Number(opcao.discount) > 0 && Number(opcao.originalPrice) > Number(opcao.price)) {
+        const original = document.createElement('s'); original.textContent = formatarPreco(opcao.originalPrice); preco.append(original);
+      }
+      const atual = document.createElement('b'); atual.textContent = formatarValorFrete(opcao.price); preco.append(atual);
+      label.append(radio, texto, preco);
+      radio.addEventListener('change', () => selecionar(opcao, radio));
+      return { label, radio };
+    };
+
+    const principal = freteOpcoes[0];
+    if (principal) {
+      const elementoPrincipal = criarOpcao(principal);
+      freteLista.appendChild(elementoPrincipal.label);
+
+      const promocao = data.promotion && typeof data.promotion === 'object' ? data.promotion : null;
+      if (promocao || Number(principal.discount) > 0 || principal.free) {
+        const caixa = document.createElement('div'); caixa.className = 'shipping-promo';
+        const mensagem = document.createElement('strong');
+        if (principal.free) mensagem.textContent = 'Frete grátis econômico liberado neste carrinho.';
+        else if (Number(principal.discount) > 0) mensagem.textContent = 'Você economizou ' + formatarPreco(principal.discount) + ' no frete econômico.';
+        else mensagem.textContent = 'Economize no frete aumentando o valor do carrinho.';
+        caixa.append(mensagem);
+        if (promocao && Number(promocao.freeShippingTarget) > 0) {
+          const restante = Math.max(0, Number(promocao.remainingToFree) || 0);
+          const alvo = Number(promocao.freeShippingTarget);
+          const subtotalPromocao = Math.max(0, Number(promocao.subtotal) || 0);
+          const detalhe = document.createElement('small');
+          detalhe.textContent = restante > 0
+            ? 'Faltam ' + formatarPreco(restante) + ' para atingir a faixa de frete grátis econômico.'
+            : principal.free ? 'Benefício aplicado automaticamente.' : 'Melhor condição disponível aplicada ao pedido.';
+          const barra = document.createElement('div'); barra.className = 'shipping-progress'; barra.setAttribute('aria-hidden', 'true');
+          const progresso = document.createElement('span'); progresso.style.width = Math.min(100, Math.round(subtotalPromocao / alvo * 100)) + '%';
+          barra.append(progresso); caixa.append(detalhe, barra);
+        }
+        freteLista.appendChild(caixa);
+      }
+
+      const outras = freteOpcoes.slice(1);
+      if (outras.length) {
+        const detalhes = document.createElement('details'); detalhes.className = 'shipping-more';
+        const resumo = document.createElement('summary'); resumo.textContent = 'Ver outras formas de entrega';
+        detalhes.append(resumo);
+        for (const opcao of outras) detalhes.appendChild(criarOpcao(opcao).label);
+        freteLista.appendChild(detalhes);
+      }
+
+      selecionar(principal, elementoPrincipal.radio);
     }
-    statusFrete(data.warning || 'Escolha uma das opções de entrega.');
+    statusFrete(data.warning || (principal && (principal.isEconomy || principal.id === 'melhorenvio:1')
+      ? 'Entrega econômica selecionada. Você pode trocar em “Ver outras formas de entrega”.'
+      : 'Opção de entrega selecionada.'));
   } catch (erro) {
     if (versao === freteConsultaVersao) statusFrete(erro.message, 'error');
   } finally {
