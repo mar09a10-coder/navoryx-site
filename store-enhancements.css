@@ -500,3 +500,44 @@
   font-size: inherit;
   color: inherit;
 }
+
+
+.nx-zoomable-image { cursor: zoom-in; }
+.nx-zoomable-image:focus-visible {
+  outline: 2px solid #64c2ff;
+  outline-offset: 4px;
+}
+.nx-image-dialog {
+  width: min(920px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  padding: 18px;
+  border: 1px solid #2b405c;
+  border-radius: 18px;
+  background: #080d14;
+  color: #fff;
+  box-shadow: 0 26px 80px #000000aa;
+}
+.nx-image-dialog::backdrop { background: #000000c7; }
+.nx-image-dialog img {
+  display: block;
+  width: 100%;
+  max-height: calc(100vh - 90px);
+  object-fit: contain;
+  border-radius: 12px;
+  background: #fff;
+}
+.nx-image-close {
+  position: absolute;
+  z-index: 2;
+  top: 25px;
+  right: 25px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #31475f;
+  border-radius: 50%;
+  background: #0b111aed;
+  color: #fff;
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+}
