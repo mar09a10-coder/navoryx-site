@@ -10,7 +10,7 @@
   <link rel="icon" type="image/png" href="img/favicon.png">
   <link rel="stylesheet" href="style.css?v=20261002-frete">
   <link rel="preload" href="fonts/manrope-latin-variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="modern.css?v=20261003-art1">
+  <link rel="stylesheet" href="modern.css?v=20261005-commerce3">
   <link rel="stylesheet" href="checkout-status.css?v=20260927-1">
   <style>#lastOrderLink[hidden] { display: none !important; }</style>
 </head>
@@ -18,7 +18,11 @@
 <body>
 
   <div class="topbar">
-    Compra segura • Ofertas selecionadas • Atendimento
+    <div class="container topbar-inner">
+      <span>Pagamento seguro pelo Mercado Pago</span>
+      <span>Frete calculado para seu CEP</span>
+      <a href="rastrear.html">Acompanhe seu pedido</a>
+    </div>
   </div>
 
   <header class="header">
@@ -37,7 +41,7 @@
         <input aria-label="Buscar produtos"
           type="search"
           name="busca"
-          placeholder="O que você procura?"
+          placeholder="Busque por produto, categoria ou acessório"
           autocomplete="off">
 
         <button type="submit">
@@ -45,6 +49,11 @@
         </button>
 
       </form>
+
+      <a href="rastrear.html" class="header-action header-track">
+        <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M21 10H3"/><path d="M7 15h1"/><path d="M12 15h1"/><rect x="3" y="6" width="18" height="12" rx="2"/></svg>
+        <span>Rastrear pedido</span>
+      </a>
 
       <a aria-label="Ver carrinho" href="carrinho.html" class="cart-button">
         <svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 3h2l2.4 12h11l2-8H6"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg><span class="cart-label">Carrinho</span>
