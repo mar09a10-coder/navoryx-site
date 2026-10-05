@@ -25,6 +25,9 @@ const embalagemFields = {
 const shippingConfigForm = document.getElementById('shippingConfigForm');
 const shippingConfigMessage = document.getElementById('shippingConfigMessage');
 const shippingOrigin = document.getElementById('shippingOrigin');
+const shippingSubsidyEnabled = document.getElementById('shippingSubsidyEnabled');
+const shippingFreeTarget = document.getElementById('shippingFreeTarget');
+const shippingMarginReserve = document.getElementById('shippingMarginReserve');
 let origemCarregada = false;
 
 const fields = {
@@ -139,7 +142,11 @@ async function carregarOrigemFrete() {
   try {
     const config = await api('/admin/frete-config', { headers: authHeaders() });
     shippingOrigin.value = config.cep_origem || '';
+    if (shippingSubsidyEnabled) shippingSubsidyEnabled.checked = config.subsidio_ativo !== false;
+    if (shippingFreeTarget) shippingFreeTarget.value = Number.isFinite(Number(config.frete_gratis_acima)) ? Number(config.frete_gratis_acima) : 199;
+    if (shippingMarginReserve) shippingMarginReserve.value = Number.isFinite(Number(config.reserva_margem)) ? Number(config.reserva_margem) : 10;
     shippingConfigMessage.textContent = '';
+    shippingConfigMessage.className = 'admin-message';
     origemCarregada = true;
     document.getElementById('saveShippingConfig').disabled = false;
   } catch (erro) {
@@ -155,9 +162,18 @@ shippingConfigForm.addEventListener('submit', async event => {
   shippingConfigMessage.className = 'admin-message';
   shippingConfigMessage.textContent = 'Salvando…';
   try {
-    const config = await api('/admin/frete-config', { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ cep_origem: shippingOrigin.value.trim() }) });
+    const payload = {
+      cep_origem: shippingOrigin.value.trim(),
+      subsidio_ativo: shippingSubsidyEnabled ? shippingSubsidyEnabled.checked : true,
+      frete_gratis_acima: shippingFreeTarget ? Number(shippingFreeTarget.value) : 199,
+      reserva_margem: shippingMarginReserve ? Number(shippingMarginReserve.value) : 10
+    };
+    const config = await api('/admin/frete-config', { method: 'PUT', headers: authHeaders(), body: JSON.stringify(payload) });
     shippingOrigin.value = config.cep_origem || '';
-    shippingConfigMessage.textContent = 'Origem salva. Este dado fica restrito ao painel.';
+    if (shippingSubsidyEnabled) shippingSubsidyEnabled.checked = config.subsidio_ativo !== false;
+    if (shippingFreeTarget) shippingFreeTarget.value = Number(config.frete_gratis_acima);
+    if (shippingMarginReserve) shippingMarginReserve.value = Number(config.reserva_margem);
+    shippingConfigMessage.textContent = 'Política de frete salva. As próximas cotações já usarão esta configuração.';
   } catch (erro) {
     shippingConfigMessage.textContent = erro.message;
     shippingConfigMessage.className = 'admin-message error';
