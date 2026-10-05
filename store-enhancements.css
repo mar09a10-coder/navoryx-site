@@ -1,0 +1,502 @@
+/* Camada profissional da loja Navoryx. Preserva a identidade preto + azul existente. */
+
+.nx-search-ready { position: relative; }
+.nx-search-suggestions {
+  position: absolute;
+  z-index: 1300;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  border: 1px solid #24364d;
+  border-radius: 14px;
+  background: #0b111a;
+  box-shadow: 0 22px 55px #00000070;
+}
+.nx-search-suggestions[hidden] { display: none; }
+.nx-search-item {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  color: #edf6ff;
+  text-decoration: none;
+  border-bottom: 1px solid #18263a;
+}
+.nx-search-item:last-child { border-bottom: 0; }
+.nx-search-item:hover, .nx-search-item:focus-visible { background: #111d2c; }
+.nx-search-item img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  border-radius: 9px;
+  background: #fff;
+}
+.nx-search-item span, .nx-search-item strong, .nx-search-item small { display: block; min-width: 0; }
+.nx-search-item strong { font-size: 13px; line-height: 1.35; }
+.nx-search-item small { margin-top: 3px; color: #72c6ff; font-weight: 700; font-size: 12px; }
+.nx-search-empty { padding: 16px; color: #98a9bd; font-size: 13px; }
+
+.nx-catalog-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: -4px 0 22px;
+}
+.nx-catalog-toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #aebed3;
+  font-size: 12px;
+  font-weight: 650;
+}
+.nx-catalog-toolbar select {
+  min-height: 40px;
+  border: 1px solid #2b405c;
+  border-radius: 10px;
+  background: #101824;
+  color: #e8f2ff;
+  padding: 0 34px 0 12px;
+}
+.nx-switch {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid #2b405c;
+  border-radius: 10px;
+  background: #101824;
+}
+.nx-switch input { accent-color: #078cff; }
+
+.product-card { position: relative; }
+.nx-sale-badge {
+  position: absolute;
+  z-index: 3;
+  top: 24px;
+  left: 24px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background: #0576d7;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .25px;
+}
+.nx-favorite-card {
+  position: absolute;
+  z-index: 4;
+  top: 24px;
+  right: 24px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d8e7f6;
+  border-radius: 50%;
+  background: #fffffff2;
+  color: #0b4f86;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 7px 18px #00000020;
+}
+.nx-favorite-card[aria-pressed="true"] { color: #0576d7; border-color: #9bd7ff; }
+.nx-old-price {
+  display: block;
+  margin: 10px 0 -7px;
+  color: #8597ab;
+  font-size: 12px;
+}
+
+.nx-product-tools {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0 4px;
+}
+.nx-product-favorite,
+.nx-secondary-button,
+.nx-primary-button,
+.nx-buy-now {
+  min-height: 44px;
+  border-radius: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.nx-product-favorite,
+.nx-secondary-button {
+  border: 1px solid #2b405c;
+  background: #101824;
+  color: #dceaff;
+  padding: 0 14px;
+}
+.nx-product-favorite:hover,
+.nx-secondary-button:hover { border-color: #078cff; background: #122137; }
+.nx-primary-button,
+.nx-buy-now {
+  border: 1px solid #078cff;
+  background: #078cff;
+  color: #fff;
+  padding: 0 16px;
+}
+.nx-primary-button:hover,
+.nx-buy-now:hover { background: #0866b9; }
+.nx-buy-now {
+  width: 100%;
+  margin-top: 10px;
+  min-height: 50px;
+  font-size: 14px;
+}
+.nx-buy-now:disabled, .nx-primary-button:disabled { opacity: .52; cursor: not-allowed; }
+
+.nx-product-shipping {
+  margin: 22px 0;
+  padding: 18px;
+  border: 1px solid #263b55;
+  border-radius: 14px;
+  background: #0c1420;
+}
+.nx-product-shipping h2 { margin: 0 0 5px; font-size: 16px; }
+.nx-product-shipping p { margin: 0 0 13px; color: #aabacd; font-size: 12px; line-height: 1.5; }
+.nx-shipping-form { display: flex; gap: 8px; }
+.nx-shipping-form input {
+  min-width: 0;
+  flex: 1;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid #304862;
+  border-radius: 10px;
+  background: #0b111a;
+  color: #fff;
+}
+.nx-shipping-form button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 10px;
+  background: #087eda;
+  color: #fff;
+  font-weight: 750;
+  cursor: pointer;
+}
+.nx-shipping-result { margin-top: 12px; color: #dceaff; font-size: 12px; line-height: 1.5; }
+.nx-shipping-result strong, .nx-shipping-result small { display: block; }
+.nx-shipping-result strong { font-size: 14px; }
+.nx-shipping-result small { margin-top: 3px; color: #9fb1c5; }
+.nx-shipping-result .nx-positive { color: #80d9ac; }
+
+.nx-related-section,
+.nx-cart-recommendations {
+  margin-top: 40px;
+  padding: 30px 0 4px;
+  border-top: 1px solid #1b2a3d;
+}
+.nx-recent-section { background: #070b12; border-block: 1px solid #152237; }
+.nx-section-heading { margin-bottom: 18px; }
+.nx-section-heading > span {
+  display: block;
+  margin-bottom: 7px;
+  color: #78a4ca;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+.nx-section-heading h2 {
+  margin: 0;
+  color: #f3f8ff;
+  font-size: 24px;
+  letter-spacing: -.03em;
+}
+.nx-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.nx-mini-card {
+  overflow: hidden;
+  border: 1px solid #22354b;
+  border-radius: 14px;
+  background: #0e1724;
+}
+.nx-mini-card-media {
+  display: block;
+  padding: 14px;
+  background: #fff;
+}
+.nx-mini-card-media img {
+  display: block;
+  width: 100%;
+  height: 150px;
+  object-fit: contain;
+}
+.nx-mini-card-body { padding: 14px; }
+.nx-mini-card-title {
+  display: block;
+  min-height: 38px;
+  color: #f1f6fd;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+.nx-mini-card-prices {
+  min-height: 46px;
+  margin-top: 10px;
+}
+.nx-mini-card-prices s {
+  display: block;
+  color: #8091a4;
+  font-size: 11px;
+}
+.nx-mini-card-prices strong {
+  display: block;
+  margin-top: 2px;
+  color: #69c2ff;
+  font-size: 18px;
+}
+.nx-mini-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-top: 12px;
+}
+.nx-mini-card-actions .nx-secondary-button,
+.nx-mini-card-actions .nx-primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 9px;
+  font-size: 10px;
+}
+
+.nx-checkout-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0 0 28px;
+  padding: 0;
+  list-style: none;
+}
+.nx-checkout-steps li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 11px 13px;
+  border: 1px solid #203047;
+  border-radius: 12px;
+  background: #0c1420;
+  color: #788ba2;
+}
+.nx-checkout-steps li span {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #172437;
+  font-size: 11px;
+  font-weight: 800;
+}
+.nx-checkout-steps li strong { overflow: hidden; text-overflow: ellipsis; font-size: 11px; white-space: nowrap; }
+.nx-checkout-steps li.is-active { border-color: #2d6fa2; color: #dceeff; }
+.nx-checkout-steps li.is-active span { background: #087eda; color: #fff; }
+
+.nx-payment-trust {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 13px 14px;
+  border: 1px solid #22354b;
+  border-radius: 11px;
+  background: #0d1723;
+}
+.nx-payment-trust strong { color: #dff1ff; font-size: 12px; }
+.nx-payment-trust span { color: #91a5bb; font-size: 11px; line-height: 1.45; }
+
+.nx-footer-links {
+  display: grid;
+  gap: 7px;
+  min-width: 190px;
+}
+.nx-footer-links strong {
+  margin-bottom: 3px;
+  color: #dcecff;
+  font-size: 12px;
+}
+.nx-footer-links a {
+  color: #8fa5bd;
+  text-decoration: none;
+  font-size: 11px;
+}
+.nx-footer-links a:hover { color: #64c2ff; }
+
+.nx-toast-region {
+  position: fixed;
+  z-index: 3000;
+  right: 18px;
+  bottom: 18px;
+  display: grid;
+  gap: 8px;
+  pointer-events: none;
+}
+.nx-toast {
+  max-width: min(360px, calc(100vw - 36px));
+  transform: translateY(12px);
+  opacity: 0;
+  padding: 12px 14px;
+  border: 1px solid #31506f;
+  border-radius: 11px;
+  background: #101b29;
+  color: #eff7ff;
+  box-shadow: 0 12px 30px #00000055;
+  font-size: 12px;
+  transition: opacity .2s ease, transform .2s ease;
+}
+.nx-toast.is-visible { transform: translateY(0); opacity: 1; }
+.nx-toast--success { border-color: #2c6a57; }
+.nx-toast--error { border-color: #824151; }
+
+.nx-back-to-top {
+  position: fixed;
+  z-index: 1200;
+  right: 18px;
+  bottom: 82px;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #2d4b69;
+  border-radius: 50%;
+  background: #0f1a28;
+  color: #dff2ff;
+  font-size: 19px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px #00000045;
+}
+.nx-back-to-top[hidden] { display: none; }
+
+.nx-page-shell {
+  min-height: 62vh;
+  padding: 46px 0 70px;
+  background: #090e16;
+}
+.nx-page-header { max-width: 760px; margin-bottom: 28px; }
+.nx-page-header .eyebrow {
+  display: block;
+  margin-bottom: 9px;
+  color: #72bcec;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+.nx-page-header h1 {
+  margin: 0 0 10px;
+  font-size: clamp(30px, 4vw, 44px);
+  letter-spacing: -.04em;
+}
+.nx-page-header p { margin: 0; color: #a9b8c9; line-height: 1.7; }
+.nx-content-card {
+  max-width: 860px;
+  padding: 24px;
+  border: 1px solid #22354b;
+  border-radius: 16px;
+  background: #0e1724;
+}
+.nx-content-card h2 { margin: 30px 0 10px; font-size: 19px; }
+.nx-content-card h2:first-child { margin-top: 0; }
+.nx-content-card p, .nx-content-card li { color: #b4c2d3; font-size: 14px; line-height: 1.75; }
+.nx-content-card a { color: #6bc5ff; }
+.nx-content-card details {
+  border-top: 1px solid #26384e;
+  padding: 15px 0;
+}
+.nx-content-card details:first-child { border-top: 0; padding-top: 0; }
+.nx-content-card summary { cursor: pointer; color: #edf6ff; font-weight: 750; }
+.nx-content-card details p { margin-bottom: 0; }
+.nx-favorites-grid { min-height: 180px; }
+.nx-empty-state {
+  grid-column: 1 / -1;
+  padding: 34px;
+  border: 1px dashed #30465f;
+  border-radius: 16px;
+  text-align: center;
+  background: #0c1420;
+}
+.nx-empty-state h2 { margin: 0 0 8px; font-size: 20px; }
+.nx-empty-state p { margin: 0 0 18px; color: #9eafc2; }
+.nx-empty-state .nx-primary-button { display: inline-flex; align-items: center; justify-content: center; }
+
+@media (max-width: 900px) {
+  .nx-mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .nx-footer-links { min-width: 0; }
+}
+@media (max-width: 640px) {
+  .nx-catalog-toolbar { justify-content: stretch; }
+  .nx-catalog-toolbar label { flex: 1 1 100%; justify-content: space-between; }
+  .nx-catalog-toolbar select { flex: 1; }
+  .nx-switch { justify-content: flex-start !important; }
+  .nx-sale-badge { top: 17px; left: 17px; }
+  .nx-favorite-card { top: 16px; right: 16px; width: 34px; height: 34px; }
+  .nx-shipping-form { flex-direction: column; }
+  .nx-shipping-form button { width: 100%; }
+  .nx-mini-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .nx-mini-card-media { padding: 9px; }
+  .nx-mini-card-media img { height: 120px; }
+  .nx-mini-card-body { padding: 11px; }
+  .nx-mini-card-actions { grid-template-columns: 1fr; }
+  .nx-checkout-steps { gap: 5px; }
+  .nx-checkout-steps li { justify-content: center; padding: 9px 6px; }
+  .nx-checkout-steps li strong { display: none; }
+  .nx-page-shell { padding: 32px 0 55px; }
+  .nx-content-card { padding: 18px; }
+}
+@media (max-width: 380px) {
+  .nx-mini-grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nx-toast { transition: none; }
+}
+
+
+.nx-product-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+  color: #7f92a8;
+  font-size: 11px;
+}
+.nx-product-breadcrumb a {
+  color: #94abc3;
+  text-decoration: none;
+}
+.nx-product-breadcrumb a:hover { color: #69c2ff; }
+.product-page-price .nx-product-old-price {
+  display: inline-block;
+  margin-right: 8px;
+  color: #8193a7;
+  font-size: 13px;
+  font-weight: 500;
+}
+.product-page-price .nx-product-discount {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #12375a;
+  color: #79cbff;
+  font-size: 10px;
+  font-weight: 800;
+  vertical-align: middle;
+}
+.product-page-price > strong {
+  display: block;
+  margin-top: 4px;
+  font-size: inherit;
+  color: inherit;
+}
