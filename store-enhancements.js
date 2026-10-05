@@ -184,7 +184,8 @@ function nxInstallFooter() {
 function nxInstallSearchSuggestions() {
   const form = document.getElementById('searchForm');
   const input = document.getElementById('searchInput');
-  if (form && input && !form.querySelector('.nx-search-suggestions')) {
+  const nativeSuggestions = document.getElementById('searchSuggestions');
+  if (form && input && !nativeSuggestions && !form.querySelector('.nx-search-suggestions')) {
     form.classList.add('nx-search-ready');
     const box = document.createElement('div');
     box.className = 'nx-search-suggestions';
@@ -270,7 +271,7 @@ function nxDecorateProductCards() {
     }
 
     const discount = nxDiscount(product);
-    if (discount > 0 && !card.querySelector('.nx-sale-badge')) {
+    if (discount > 0 && !card.querySelector('.product-discount-card, .nx-sale-badge')) {
       const badge = document.createElement('span');
       badge.className = 'nx-sale-badge';
       badge.textContent = '-' + discount + '%';
@@ -278,7 +279,7 @@ function nxDecorateProductCards() {
     }
 
     const price = card.querySelector('.product-price');
-    if (price && Number(product.price) > nxPrice(product) && !price.parentElement.querySelector('.nx-old-price')) {
+    if (price && Number(product.price) > nxPrice(product) && !price.parentElement.querySelector('.product-old-price, .nx-old-price')) {
       const old = document.createElement('s');
       old.className = 'nx-old-price';
       old.textContent = nxMoney(product.price);
@@ -288,37 +289,30 @@ function nxDecorateProductCards() {
 }
 function nxApplyCatalogControls() {
   const grid = document.getElementById('storeProducts');
-  const sort = document.getElementById('nxCatalogSort');
   const stockOnly = document.getElementById('nxStockOnly');
   if (!grid) return;
-  const currentCards = [...grid.querySelectorAll('.product-card')];
-  currentCards.forEach(card => {
+  [...grid.querySelectorAll('.product-card')].forEach(card => {
     card.hidden = Boolean(stockOnly && stockOnly.checked && Number(card.dataset.nxStock || 0) <= 0);
   });
-  const mode = sort ? sort.value : 'relevance';
-  if (mode !== 'relevance') {
-    const sorted = [...currentCards].sort((a, b) => {
-      if (mode === 'price-asc') return Number(a.dataset.nxPrice || 0) - Number(b.dataset.nxPrice || 0);
-      if (mode === 'price-desc') return Number(b.dataset.nxPrice || 0) - Number(a.dataset.nxPrice || 0);
-      if (mode === 'name') return String(a.dataset.nxName || '').localeCompare(String(b.dataset.nxName || ''), 'pt-BR');
-      return 0;
-    });
-    if (sorted.some((card, index) => card !== currentCards[index])) sorted.forEach(card => grid.appendChild(card));
-  }
 }
 function nxInstallCatalogToolbar() {
   const grid = document.getElementById('storeProducts');
-  if (!grid || document.getElementById('nxCatalogToolbar')) return;
-  const toolbar = document.createElement('div');
-  toolbar.id = 'nxCatalogToolbar';
-  toolbar.className = 'nx-catalog-toolbar';
-  toolbar.innerHTML = '<label>Ordenar <select id="nxCatalogSort">' +
-    '<option value="relevance">Relevância</option><option value="price-asc">Menor preço</option>' +
-    '<option value="price-desc">Maior preço</option><option value="name">Nome A–Z</option></select></label>' +
-    '<label class="nx-switch"><input id="nxStockOnly" type="checkbox"><span>Somente disponíveis</span></label>';
-  const status = document.getElementById('catalogStatus');
-  (status ? status.parentElement : grid.parentElement).insertBefore(toolbar, grid);
-  toolbar.addEventListener('change', nxApplyCatalogControls);
+  if (!grid || document.getElementById('nxStockOnly')) return;
+
+  const nativeToolbar = document.querySelector('.catalog-toolbar');
+  const control = document.createElement('label');
+  control.className = 'nx-switch';
+  control.innerHTML = '<input id="nxStockOnly" type="checkbox"><span>Somente disponíveis</span>';
+
+  if (nativeToolbar) nativeToolbar.appendChild(control);
+  else {
+    const toolbar = document.createElement('div');
+    toolbar.id = 'nxCatalogToolbar';
+    toolbar.className = 'nx-catalog-toolbar';
+    toolbar.appendChild(control);
+    grid.parentElement.insertBefore(toolbar, grid);
+  }
+  control.addEventListener('change', nxApplyCatalogControls);
 
   const observer = new MutationObserver(() => {
     nxDecorateProductCards();
@@ -424,13 +418,15 @@ function nxInstallProductTools(product) {
   const info = document.querySelector('.product-page-info');
   if (!info || document.getElementById('nxProductTools')) return;
   const id = String(product.id);
-  const breadcrumb = document.getElementById('nxBreadcrumbProduct');
+  const breadcrumb = document.getElementById('dynamicBreadcrumbName') || document.getElementById('nxBreadcrumbProduct');
   if (breadcrumb) breadcrumb.textContent = product.name || 'Produto';
 
+  const nativeOldPrice = document.getElementById('dynamicProductOldPrice');
+  const nativeDiscount = document.getElementById('dynamicProductDiscount');
   const priceElement = document.getElementById('dynamicProductPrice');
   const regularPrice = Number(product.price);
   const currentPrice = nxPrice(product);
-  if (priceElement && Number.isFinite(regularPrice) && currentPrice > 0) {
+  if (!nativeOldPrice && !nativeDiscount && priceElement && Number.isFinite(regularPrice) && currentPrice > 0) {
     priceElement.replaceChildren();
     if (regularPrice > currentPrice) {
       const old = document.createElement('s');
@@ -674,6 +670,9 @@ async function nxRenderFavoritesPage() {
 }
 
 function nxApplySearchFromUrl() {
+  try {
+    if (typeof aplicarBusca === 'function') return;
+  } catch (_) {}
   const input = document.getElementById('searchInput');
   const form = document.getElementById('searchForm');
   if (!input || !form) return;
