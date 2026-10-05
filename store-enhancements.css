@@ -460,3 +460,43 @@
 @media (prefers-reduced-motion: reduce) {
   .nx-toast { transition: none; }
 }
+
+
+.nx-product-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+  color: #7f92a8;
+  font-size: 11px;
+}
+.nx-product-breadcrumb a {
+  color: #94abc3;
+  text-decoration: none;
+}
+.nx-product-breadcrumb a:hover { color: #69c2ff; }
+.product-page-price .nx-product-old-price {
+  display: inline-block;
+  margin-right: 8px;
+  color: #8193a7;
+  font-size: 13px;
+  font-weight: 500;
+}
+.product-page-price .nx-product-discount {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #12375a;
+  color: #79cbff;
+  font-size: 10px;
+  font-weight: 800;
+  vertical-align: middle;
+}
+.product-page-price > strong {
+  display: block;
+  margin-top: 4px;
+  font-size: inherit;
+  color: inherit;
+}
