@@ -338,6 +338,7 @@ function nxInstallFavoriteClicks() {
     nxToast(active ? 'Produto salvo nos favoritos.' : 'Produto removido dos favoritos.', 'success');
   });
   document.addEventListener('navoryx:favorites', () => {
+    nxUpdateFavoriteLinks();
     document.querySelectorAll('.nx-favorite-card, .nx-product-favorite').forEach(button => {
       const active = nxIsFavorite(button.dataset.productId);
       button.setAttribute('aria-pressed', String(active));
@@ -347,14 +348,21 @@ function nxInstallFavoriteClicks() {
   });
 }
 
+function nxUpdateFavoriteLinks() {
+  const count = nxFavorites().length;
+  document.querySelectorAll('a[href="favoritos.html"]').forEach(link => {
+    link.textContent = count ? 'Favoritos (' + count + ')' : 'Favoritos';
+  });
+}
 function nxAddProfessionalHeaderLink() {
   document.querySelectorAll('.nav').forEach(nav => {
-    if (nav.querySelector('a[href="favoritos.html"]')) return;
-    const link = document.createElement('a');
-    link.href = 'favoritos.html';
-    link.textContent = 'Favoritos';
-    nav.appendChild(link);
+    if (!nav.querySelector('a[href="favoritos.html"]')) {
+      const link = document.createElement('a');
+      link.href = 'favoritos.html';
+      nav.appendChild(link);
+    }
   });
+  nxUpdateFavoriteLinks();
 }
 
 function nxRecordRecent(product) {
@@ -635,6 +643,78 @@ function nxInstallCheckoutStepper() {
   }
 }
 
+function nxInstallCheckoutMasks() {
+  const phone = document.getElementById('telefone');
+  const documentField = document.getElementById('documento');
+  if (phone && phone.dataset.nxMask !== '1') {
+    phone.dataset.nxMask = '1';
+    phone.addEventListener('input', () => {
+      const digits = phone.value.replace(/\D/g, '').slice(0, 11);
+      if (digits.length <= 10) phone.value = digits.replace(/^(\d{0,2})(\d{0,4})(\d{0,4}).*/, (_, a, b, d) =>
+        (a ? '(' + a + (a.length === 2 ? ') ' : '') : '') + b + (d ? '-' + d : ''));
+      else phone.value = digits.replace(/^(\d{2})(\d{5})(\d{0,4}).*/, '($1) $2-$3').replace(/-$/, '');
+    });
+  }
+  if (documentField && documentField.dataset.nxMask !== '1') {
+    documentField.dataset.nxMask = '1';
+    documentField.addEventListener('input', () => {
+      const digits = documentField.value.replace(/\D/g, '').slice(0, 14);
+      if (digits.length <= 11) {
+        documentField.value = digits
+          .replace(/^(\d{3})(\d)/, '$1.$2')
+          .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+          .replace(/\.(\d{3})(\d)/, '.$1-$2');
+      } else {
+        documentField.value = digits
+          .replace(/^(\d{2})(\d)/, '$1.$2')
+          .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+          .replace(/\.(\d{3})(\d)/, '.$1/$2')
+          .replace(/(\d{4})(\d)/, '$1-$2');
+      }
+    });
+  }
+}
+
+function nxInstallImageZoom() {
+  const image = document.getElementById('dynamicProductImage');
+  if (!image || document.getElementById('nxImageDialog')) return;
+  image.classList.add('nx-zoomable-image');
+  image.tabIndex = 0;
+  image.setAttribute('role', 'button');
+  image.setAttribute('aria-label', 'Ampliar imagem do produto');
+
+  const dialog = document.createElement('dialog');
+  dialog.id = 'nxImageDialog';
+  dialog.className = 'nx-image-dialog';
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'nx-image-close';
+  close.setAttribute('aria-label', 'Fechar imagem ampliada');
+  close.textContent = '×';
+  const enlarged = document.createElement('img');
+  enlarged.alt = '';
+  dialog.append(close, enlarged);
+  document.body.appendChild(dialog);
+
+  const open = () => {
+    if (!image.src) return;
+    enlarged.src = image.src;
+    enlarged.alt = image.alt || 'Produto ampliado';
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+    else dialog.setAttribute('open', '');
+  };
+  const closeDialog = () => {
+    if (typeof dialog.close === 'function' && dialog.open) dialog.close();
+    else dialog.removeAttribute('open');
+  };
+  image.addEventListener('click', open);
+  image.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open(); }
+  });
+  close.addEventListener('click', closeDialog);
+  dialog.addEventListener('click', event => { if (event.target === dialog) closeDialog(); });
+}
+
 function nxInstallBackToTop() {
   if (document.getElementById('nxBackToTop')) return;
   const button = document.createElement('button');
@@ -728,6 +808,8 @@ document.addEventListener('DOMContentLoaded', () => {
   nxInstallFavoriteClicks();
   nxAddProfessionalHeaderLink();
   nxInstallCheckoutStepper();
+  nxInstallCheckoutMasks();
+  nxInstallImageZoom();
   nxInstallBackToTop();
   nxInstallHomeSchema();
   nxWaitForProduct();
