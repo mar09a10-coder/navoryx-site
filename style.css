@@ -2648,3 +2648,94 @@ footer {
 
 .add-cart:disabled,.product-buy-button:disabled{cursor:not-allowed;opacity:.55}
 .product-stock-status{margin:8px 0 14px;font-size:14px;font-weight:700;color:#334155}
+
+
+/* Frete inteligente: destaque para a opção econômica e redução de fricção no checkout. */
+.shipping-option--economy {
+  border-color: #3b82f6;
+  background: linear-gradient(180deg, rgba(37, 99, 235, .12), rgba(21, 41, 65, .7));
+}
+.shipping-option-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  white-space: nowrap;
+}
+.shipping-option-price s {
+  color: #8fa3bb;
+  font-size: 12px;
+  font-weight: 600;
+}
+.shipping-option-price b {
+  color: #f8fbff;
+  font-size: 14px;
+}
+.shipping-option--economy .shipping-option-price b {
+  color: #7dd3fc;
+}
+.shipping-saving {
+  color: #86efac !important;
+  font-weight: 700;
+}
+.shipping-promo {
+  margin: -2px 0 12px;
+  padding: 12px;
+  border: 1px solid rgba(96, 165, 250, .32);
+  border-radius: 12px;
+  background: rgba(37, 99, 235, .08);
+}
+.shipping-promo strong,
+.shipping-promo small {
+  display: block;
+}
+.shipping-promo strong {
+  color: #eaf3ff;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.shipping-promo small {
+  margin-top: 5px;
+  color: #b8c7da;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.shipping-progress {
+  height: 6px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #1a2a3f;
+}
+.shipping-progress > span {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  border-radius: inherit;
+  background: #3b82f6;
+  transition: width .2s ease;
+}
+.shipping-more {
+  margin-top: 8px;
+}
+.shipping-more > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 10px 2px;
+  color: #b8c7da;
+  font-size: 13px;
+  font-weight: 700;
+}
+.shipping-more > summary::-webkit-details-marker {
+  display: none;
+}
+.shipping-more > summary::after {
+  content: ' +';
+  color: #60a5fa;
+}
+.shipping-more[open] > summary::after {
+  content: ' −';
+}
+.shipping-more .shipping-option {
+  margin-top: 8px;
+}

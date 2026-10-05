@@ -7,7 +7,7 @@ const source = fs.readFileSync(require('node:path').join(__dirname, '..', 'frete
 function page() {
   let cart = [{ id: 1, name: 'Fone', price: 30, quantity: 2 }];
   const memory = new Map();
-  const eventNode = () => ({ value: '', textContent: '', dataset: {}, children: [], listeners: {},
+  const eventNode = () => ({ value: '', textContent: '', dataset: {}, style: {}, children: [], listeners: {},
     addEventListener(type, fn) { this.listeners[type] = fn; },
     append(...els) { this.children.push(...els); }, appendChild(el) { this.children.push(el); },
     replaceChildren() { this.children = []; }, setAttribute() {} });
@@ -19,7 +19,7 @@ function page() {
       { id: 'combinar', name: 'Combinar entrega com o vendedor', price: null, description: 'Valor e prazo a confirmar' }] }) };
   const messages = []; const calls = [];
   const context = vm.createContext({ document: { getElementById: id => nodes[id] || null,
-    querySelectorAll: sel => sel === '[data-shipping-summary]' ? [summary] : [label], createElement: eventNode },
+    querySelectorAll: sel => sel === '[data-shipping-summary]' ? [summary] : [label], createElement: tag => { const node = eventNode(); node.tagName = String(tag).toUpperCase(); return node; } },
     obterCarrinho: () => cart, formatarPreco: n => n.toFixed(2),
     localStorage: { getItem: k => memory.get(k) || null, setItem: (k,v) => memory.set(k,v), removeItem: k => memory.delete(k) },
     window: { location: { href: '' }, addEventListener() {} },
@@ -38,6 +38,22 @@ test('selecionar Correios soma o valor e guarda a cotação, sem mudar o foco', 
   const p = page(); await p.calculate(); p.select(0);
   assert.equal(p.nodes.paymentTotal.textContent, '81.56'); assert.equal(p.summary.textContent, '21.56');
   assert.equal(p.context.obterFreteSelecionado().token, 'assinado');
+});
+test('PAC econômico é selecionado automaticamente, aceita frete grátis e esconde SEDEX em outras formas', async () => {
+  const p = page();
+  p.state.request = async () => ({ cep: '29047535', expiresAt: Date.now() + 900000,
+    promotion: { freeShippingTarget: 199, subtotal: 240, remainingToFree: 0, economyOnly: true },
+    options: [
+      { id: 'melhorenvio:1', name: 'Correios PAC', price: 0, originalPrice: 33.11, discount: 33.11, free: true, isEconomy: true, description: '21 dias úteis', token: 'pac-gratis' },
+      { id: 'melhorenvio:2', name: 'Correios SEDEX', price: 72.71, originalPrice: 72.71, discount: 0, free: false, isEconomy: false, description: '5 dias úteis', token: 'sedex' }
+    ] });
+  await p.calculate();
+  const salvo = p.context.obterFreteSelecionado();
+  assert.equal(salvo.method, 'melhorenvio:1'); assert.equal(salvo.price, 0); assert.equal(salvo.token, 'pac-gratis');
+  assert.equal(p.summary.textContent, 'Grátis'); assert.equal(p.nodes.paymentTotal.textContent, '60.00');
+  assert.equal(p.nodes.shippingOptions.children.length, 3);
+  assert.equal(p.nodes.shippingOptions.children[2].tagName, 'DETAILS');
+  assert.equal(p.nodes.shippingOptions.children[2].children[0].textContent, 'Ver outras formas de entrega');
 });
 test('entrega a combinar retornada por servidor antigo não é oferecida nem autoriza pagamento', async () => {
   const p = page(); await p.calculate(); p.customer();
