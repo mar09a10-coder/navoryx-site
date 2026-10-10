@@ -366,7 +366,11 @@
       if (list.childElementCount) root.append(node('h3', title, 'admin-subheading'), list);
     });
     const details = node('details'); details.append(node('summary', 'Conferir descrição completa'), node('p', r.description, 'ml-review-description')); root.append(details);
-    if (r.warnings.length) { const list = node('ul', undefined, 'ml-errors'); r.warnings.forEach(w => list.append(node('li', w))); root.append(node('h3', 'Orientações do Mercado Livre'), list); }
+    if (r.warnings.length) {
+      const list = node('ul', undefined, 'ml-warnings');
+      r.warnings.forEach(w => list.append(node('li', w)));
+      root.append(node('h3', 'Informações do Mercado Livre'), list);
+    }
     el('mlReview').hidden = false;
     el('mlReview').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
