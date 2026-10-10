@@ -378,15 +378,38 @@
     const root = el('mlHistory'); root.replaceChildren();
     const entries = history.filter(h => h.state !== 'draft');
     if (!entries.length) { root.append(node('p', 'Nenhum envio registrado nesta conta.')); return; }
-    const states = { published: 'Anúncio criado', failed: 'Envio recusado — corrija os dados e revise novamente',
+    const states = { published: 'Anúncio criado', removed: 'Anúncio encerrado no Mercado Livre',
+      failed: 'Envio recusado — corrija os dados e revise novamente',
       sending: 'Envio iniciado — confirme o resultado', unknown: 'Resultado ainda não confirmado' };
     entries.forEach(item => {
       const card = node('div', undefined, 'ml-history-item');
-      card.append(node('strong', item.title), node('p', states[item.state] || item.state));
+      const deleted = item.state === 'removed' && (item.item_sub_status || []).includes('deleted');
+      const unavailable = item.state === 'removed' && (item.item_sub_status || []).includes('not_found');
+      const stateLabel = deleted
+        ? 'Excluído no Mercado Livre — publicação definitiva encerrada'
+        : unavailable
+          ? 'Não está mais disponível no Mercado Livre'
+          : states[item.state] || item.state;
+      card.append(node('strong', item.title), node('p', stateLabel));
       if (item.item_id) {
-        card.append(node('p', `${item.item_id} · status recebido: ${item.item_status || 'aguardando'}`));
+        const sub = Array.isArray(item.item_sub_status) && item.item_sub_status.length
+          ? ' · ' + item.item_sub_status.join(', ')
+          : '';
+        card.append(node('p', `${item.item_id} · status recebido: ${item.item_status || 'aguardando'}${sub}`));
         const href = marketplaceLink(item.permalink);
-        if (href) { const a = node('a', 'Abrir anúncio no Mercado Livre'); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; card.append(a); }
+        if (href && item.state !== 'removed') {
+          const a = node('a', 'Abrir anúncio no Mercado Livre'); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; card.append(a);
+        }
+
+        if (item.state === 'removed') {
+          card.append(node('p',
+            deleted
+              ? 'Esse anúncio foi excluído no Mercado Livre e não pode ser reativado. O produto já pode ser publicado novamente pela Navoryx.'
+              : 'Esse anúncio foi encerrado e não pode ser reativado. O produto já pode ser publicado novamente.',
+            'admin-preview-note'));
+          root.append(card);
+          return;
+        }
 
         const actions = node('div', undefined, 'admin-actions');
 
