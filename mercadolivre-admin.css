@@ -26,3 +26,13 @@
 .ml-history-item p{margin:7px 0}
 .ml-history-item a,#mlReview a{color:#7dd3fc;text-decoration:underline}
 @media(max-width:640px){.ml-review-grid{grid-template-columns:1fr}.ml-photo{align-items:flex-start}#mlPanel .admin-actions{align-items:stretch;flex-direction:column}#mlPanel .admin-actions button{width:100%}}
+
+.ml-warnings{
+  margin:10px 0 18px;
+  padding:12px 16px 12px 34px;
+  border:1px solid #28506f;
+  border-radius:10px;
+  background:#0b1b2b;
+  color:#b9ddf7;
+}
+.ml-warnings li{margin:5px 0}
