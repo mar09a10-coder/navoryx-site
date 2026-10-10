@@ -366,10 +366,18 @@ form.addEventListener('submit', async event => {
   formMessage.textContent = 'Salvando...';
   try {
     const path = produtoEditando ? '/produtos/' + produtoEditando : '/produtos';
-    await api(path, { method: produtoEditando ? 'PUT' : 'POST', headers: authHeaders(), body: JSON.stringify(dados) });
+    const salvo = await api(path, { method: produtoEditando ? 'PUT' : 'POST', headers: authHeaders(), body: JSON.stringify(dados) });
+    const sync = salvo?.mercadoLivreSync;
     resetarFormulario();
     await carregarProdutos();
-    formMessage.textContent = 'Produto salvo com sucesso.';
+    if (sync?.linked && sync.ok === true) {
+      formMessage.textContent = 'Produto salvo. Estoque sincronizado com o Mercado Livre.';
+    } else if (sync?.linked && sync.ok === false) {
+      formMessage.textContent = 'Produto salvo na Navoryx, mas o estoque do Mercado Livre precisa de atenção: ' + (sync.error || 'não foi possível confirmar a atualização.');
+      formMessage.className = 'admin-message error';
+    } else {
+      formMessage.textContent = 'Produto salvo com sucesso.';
+    }
   } catch (erro) {
     formMessage.textContent = erro.message;
     formMessage.className = 'admin-message error';
