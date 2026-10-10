@@ -334,9 +334,16 @@
   function reviewContent(data) {
     const r = data.review, root = el('mlReviewContent'); root.replaceChildren();
     const list = node('dl', undefined, 'ml-review-grid');
+    const shippingNames = { me2: 'Mercado Envios 2', me1: 'Mercado Envios 1' };
+    const shippingMode = r.shipping?.mode;
+    const logisticType = r.shipping?.logistic_type;
+    const shippingText = shippingMode
+      ? `${shippingNames[shippingMode] || shippingMode}${logisticType ? ' · ' + logisticType : ''}`
+      : 'Definido pelo Mercado Livre na validação';
     const entries = [['Conta', `${r.seller.nickname} (${r.seller.id})`], ['Produto', r.title], ['Categoria', r.category],
       ['Preço', formatarPreco(r.price)], ['Unidades', r.quantity], ['Condição', conditionNames[r.condition]],
-      ['Tipo de anúncio', r.listing_type], ['Frete', r.free_shipping ? 'Mercado Envios com frete grátis oferecido' : 'Mercado Envios, sujeito às regras de frete grátis obrigatório']];
+      ['Tipo de anúncio', r.listing_type], ['Logística selecionada', shippingText],
+      ['Frete grátis', r.free_shipping ? 'Sim' : 'Não, salvo se o Mercado Livre tornar obrigatório']];
     if (r.fee) {
       entries.push(['Tarifa estimada por venda / unidade', formatarPreco(r.fee.sale)], ['Tarifa para anunciar', formatarPreco(r.fee.listing)]);
     }
@@ -345,7 +352,7 @@
     const photoWrapper = node('div', undefined, 'ml-photo'); photoWrapper.append(photo);
     root.append(photoWrapper, list);
     root.append(node('p', r.fee ?
-      'As tarifas são estimadas para a logística padrão da conta (' + r.fee.logistic + '). Não incluem o frete, impostos ou outros custos e podem mudar conforme as condições do Mercado Livre.' :
+      'As tarifas são estimadas usando ' + (r.fee.shipping_mode || 'a modalidade selecionada') + ' / ' + r.fee.logistic + '. Não incluem o frete, impostos ou outros custos e podem mudar conforme as condições do Mercado Livre.' :
       'Não foi possível estimar as tarifas desta conta. Confira as tarifas e o custo do frete no Mercado Livre antes de confirmar.', 'admin-preview-note'));
     const feesLink = node('a', 'Consultar tarifas e condições no Mercado Livre');
     feesLink.href = 'https://www.mercadolivre.com.br/ajuda'; feesLink.target = '_blank'; feesLink.rel = 'noopener noreferrer'; root.append(feesLink);
