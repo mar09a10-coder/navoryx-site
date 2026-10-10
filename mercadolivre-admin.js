@@ -387,6 +387,47 @@
         card.append(node('p', `${item.item_id} · status recebido: ${item.item_status || 'aguardando'}`));
         const href = marketplaceLink(item.permalink);
         if (href) { const a = node('a', 'Abrir anúncio no Mercado Livre'); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; card.append(a); }
+
+        const actions = node('div', undefined, 'admin-actions');
+
+        const shippingButton = node('button', 'Conferir/corrigir envio ME2', 'admin-secondary');
+        shippingButton.type = 'button';
+        shippingButton.addEventListener('click', () => marketplaceAction(
+          shippingButton,
+          `/${encodeURIComponent(item.product_id)}/envio`,
+          {},
+          result => result.shipping_mode === 'me2'
+            ? 'Envio confirmado em Mercado Envios 2' + (result.logistic_type ? ' (' + result.logistic_type + ').' : '.')
+            : 'Confira a logística do anúncio.'
+        ));
+        actions.append(shippingButton);
+
+        const stockButton = node('button', 'Sincronizar estoque', 'admin-secondary');
+        stockButton.type = 'button';
+        stockButton.addEventListener('click', () => {
+          const p = catalog.find(product => String(product.id) === String(item.product_id));
+          const quantity = Math.max(0, Math.floor(Number(p?.stock) || 0));
+          marketplaceAction(stockButton, `/${encodeURIComponent(item.product_id)}/estoque`, { quantity },
+            result => result.linked
+              ? 'Estoque sincronizado com o Mercado Livre: ' + Number(result.quantity ?? result.requested_quantity ?? quantity) + ' unidade(s).'
+              : 'Este produto ainda não possui anúncio vinculado.');
+        });
+        actions.append(stockButton);
+
+        const activateButton = node('button', 'Ativar anúncio', 'admin-secondary');
+        activateButton.type = 'button';
+        activateButton.addEventListener('click', () => marketplaceAction(
+          activateButton,
+          `/${encodeURIComponent(item.product_id)}/ativar`,
+          {},
+          result => result.status === 'active'
+            ? 'Anúncio ativo no Mercado Livre.'
+            : 'O Mercado Livre ainda não confirmou a ativação.'
+        ));
+        actions.append(activateButton);
+
+        card.append(actions);
+
         if (!item.description_sent) {
           card.append(node('p', 'O anúncio foi criado, mas o envio da descrição precisa ser conferido.'));
           const button = node('button', 'Conferir e reenviar descrição', 'admin-secondary'); button.type = 'button';
@@ -410,6 +451,27 @@
     if (version !== generation || !token()) return;
     history = result.publications; renderHistory();
   }
+  async function marketplaceAction(button, path, body, successMessage) {
+    if (busy) return;
+    const version = generation;
+    setBusy(true);
+    button.disabled = true;
+    message('Consultando o Mercado Livre…');
+    try {
+      const result = await call(path, body);
+      if (version !== generation) return;
+      message(typeof successMessage === 'function' ? successMessage(result) : (successMessage || 'Operação concluída.'));
+      await updateHistory();
+    } catch (error) {
+      if (version === generation) failure(error);
+    } finally {
+      if (version === generation) {
+        setBusy(false);
+        button.disabled = false;
+      }
+    }
+  }
+
   async function historyAction(button, path, body) {
     if (busy) return;
     const version = generation; setBusy(true); button.disabled = true; message('Conferindo o anúncio…');
