@@ -350,8 +350,16 @@ function nxInstallFavoriteClicks() {
 
 function nxUpdateFavoriteLinks() {
   const count = nxFavorites().length;
-  document.querySelectorAll('a[href="favoritos.html"]').forEach(link => {
+  document.querySelectorAll('a[href="favoritos.html"]:not(.nx-mobile-favorites)').forEach(link => {
     link.textContent = count ? 'Favoritos (' + count + ')' : 'Favoritos';
+  });
+  document.querySelectorAll('.nx-mobile-favorites').forEach(link => {
+    const badge = link.querySelector('.nx-mobile-favorite-count');
+    if (badge) {
+      badge.textContent = String(count);
+      badge.hidden = count <= 0;
+    }
+    link.setAttribute('aria-label', count ? 'Favoritos, ' + count + ' produto(s) salvo(s)' : 'Favoritos');
   });
 }
 function nxAddProfessionalHeaderLink() {
@@ -361,6 +369,28 @@ function nxAddProfessionalHeaderLink() {
       link.href = 'favoritos.html';
       nav.appendChild(link);
     }
+  });
+
+  document.querySelectorAll('.header-inner').forEach(header => {
+    if (header.querySelector('.nx-mobile-favorites')) return;
+    const link = document.createElement('a');
+    link.href = 'favoritos.html';
+    link.className = 'nx-mobile-favorites';
+    link.setAttribute('aria-label', 'Favoritos');
+
+    const icon = document.createElement('span');
+    icon.className = 'nx-mobile-favorite-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = '♡';
+
+    const badge = document.createElement('span');
+    badge.className = 'nx-mobile-favorite-count';
+    badge.hidden = true;
+
+    link.append(icon, badge);
+    const tracking = header.querySelector('.header-track');
+    const cart = header.querySelector('.cart-button');
+    header.insertBefore(link, tracking || cart || null);
   });
   nxUpdateFavoriteLinks();
 }
@@ -620,9 +650,10 @@ async function nxInstallCartRecommendations() {
 function nxInstallCheckoutStepper() {
   const cart = document.querySelector('.cart-page .container');
   const checkout = document.querySelector('.checkout-page .container');
-  const target = cart || checkout;
+  const payment = document.querySelector('.payment-page .container');
+  const target = cart || checkout || payment;
   if (!target || target.querySelector('.nx-checkout-steps')) return;
-  const current = checkout ? 2 : 1;
+  const current = payment ? 3 : checkout ? 2 : 1;
   const steps = document.createElement('ol');
   steps.className = 'nx-checkout-steps';
   ['Carrinho', 'Entrega e dados', 'Pagamento'].forEach((label, index) => {
