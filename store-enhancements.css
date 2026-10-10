@@ -541,3 +541,65 @@
   line-height: 1;
   cursor: pointer;
 }
+
+
+/* Acesso aos favoritos no mobile */
+.nx-mobile-favorites {
+  display: none;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  min-height: 42px;
+  border: 1px solid #203047;
+  border-radius: 11px;
+  background: #0d131e;
+  color: #dff2ff;
+  text-decoration: none;
+}
+.nx-mobile-favorite-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+.nx-mobile-favorite-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #078cff;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+}
+.nx-mobile-favorite-count[hidden] { display: none !important; }
+
+@media (max-width: 768px) {
+  .header-inner {
+    grid-template-columns: minmax(0, 1fr) auto auto auto;
+    grid-template-areas:
+      "brand favorite track cart"
+      "search search search search";
+  }
+  .nx-mobile-favorites {
+    display: inline-flex;
+    grid-area: favorite;
+    justify-self: end;
+  }
+}
+@media (max-width: 380px) {
+  .brand { width: 112px; }
+  .logo-navoryx { width: 150px; height: 60px; }
+  .header-inner { gap: 6px; }
+  .nx-mobile-favorites,
+  .header-action,
+  .cart-button {
+    min-width: 39px;
+    min-height: 39px;
+    padding: 7px;
+  }
+}
