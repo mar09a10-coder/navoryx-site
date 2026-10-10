@@ -551,14 +551,29 @@ const searchInput =
 const searchSuggestions =
   document.getElementById('searchSuggestions');
 
+function normalizarBusca(valor) {
+  return String(valor || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
 function produtosQueCombinam(termo) {
-  const normalizado = String(termo || '').trim().toLowerCase();
-  if (!normalizado) return produtosLoja;
-  return produtosLoja.filter(produto => `
-    ${produto.name || ''}
-    ${produto.description || ''}
-    ${produto.category || ''}
-  `.toLowerCase().includes(normalizado));
+  const tokens = normalizarBusca(termo).split(/\s+/).filter(Boolean);
+  if (!tokens.length) return produtosLoja;
+  return produtosLoja.filter(produto => {
+    const texto = normalizarBusca(`
+      ${produto.name || ''}
+      ${produto.description || ''}
+      ${produto.category || ''}
+      ${produto.sku || ''}
+      ${produto.ean || ''}
+      ${produto.gtin || ''}
+    `);
+    return tokens.every(token => texto.includes(token));
+  });
 }
 
 function aplicarBusca(termo) {
